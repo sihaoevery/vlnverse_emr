@@ -7,16 +7,16 @@ from .base_encoders import (
     StateEncoder,
 )
 
-cma_cfg = ModelCfg(
+cma_vlnverse_cfg = ModelCfg(
     policy_name='CMA_Policy',
     max_step=200,
     len_traj_act=4,
     instruction_encoder=InstructionEncoder(
         sensor_uuid='instruction',
-        vocab_size=2504,
+        vocab_size=3859,
         use_pretrained_embeddings=True,
-        embedding_file='data/vln_pe/raw_data/vlnverse/final_splits_with_distance_formal/embeddings.json.gz',
-        dataset_vocab='data/vln_pe/raw_data/r2r/train/train.json.gz',
+        embedding_file='data/vln_pe/raw_data/vlnverse/embeddings.json.gz',
+        dataset_vocab='data/vln_pe/raw_data/vlnverse/coarse/train/train.json.gz',
         fine_tune_embeddings=False,
         embedding_size=50,
         hidden_size=128,
@@ -43,7 +43,7 @@ cma_cfg = ModelCfg(
     ),
 )
 
-cma_eval_cfg = ModelCfg(
+cma_vlnverse_eval_cfg = ModelCfg(
     policy_name='CMA_Policy',
     ablate_instruction=False,
     ablate_depth=False,
@@ -51,10 +51,10 @@ cma_eval_cfg = ModelCfg(
     normalize_rgb=False,
     instruction_encoder=InstructionEncoder(
         sensor_uuid='instruction',
-        vocab_size=2504,
+        vocab_size=3859,
         use_pretrained_embeddings=True,
-        embedding_file='data/vln_pe/raw_data/r2r/embeddings.json.gz',
-        dataset_vocab='data/vln_pe/raw_data/r2r/train/train.json.gz',
+        embedding_file='data/vln_pe/raw_data/vlnverse/embeddings.json.gz',
+        dataset_vocab='data/vln_pe/raw_data/vlnverse/coarse/train/train.json.gz',
         fine_tune_embeddings=False,
         embedding_size=50,
         hidden_size=128,

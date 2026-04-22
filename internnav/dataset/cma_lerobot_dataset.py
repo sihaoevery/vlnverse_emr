@@ -36,36 +36,38 @@ class CMALerobotDataset(BaseDataset):
         else:
             self.inflec_weights = torch.tensor([1.0, 1.0])
 
+        # dataset_data is the authoritative source for instruction_text / instruction_tokens
+        # (loaded from the preprocessed .json.gz). Training no longer reads those fields
+        # from each trajectory's meta/episodes.jsonl. Check up-front so the error
+        # surfaces before any disk I/O.
+        assert dataset_data is not None, (
+            "CMALerobotDataset requires dataset_data (loaded from the preprocessed "
+            ".json.gz) as the single source of instruction content. Ensure "
+            "load_dataset(...) is called before constructing the dataset."
+        )
+
         self.camera_name = self.config.il.camera_name
 
         self.lerobot_as_lmdb = LerobotAsLmdb(self.lerobot_features_dir)
         all_lmdb_keys = self.lerobot_as_lmdb.get_all_keys()
 
-        # Filter LMDB keys based on dataset_data (if provided)
-        if dataset_data:
-            allowed_keys = set(dataset_data.keys())
-            self.lmdb_keys = [k for k in all_lmdb_keys if k in allowed_keys]
-            print(f"Filtered dataset: {len(all_lmdb_keys)} total episodes -> {len(self.lmdb_keys)} selected episodes")
-        else:
-            self.lmdb_keys = all_lmdb_keys
-            print(f"Using all {len(all_lmdb_keys)} episodes (no filtering)")
+        allowed_keys = set(dataset_data.keys())
+        self.lmdb_keys = [k for k in all_lmdb_keys if k in allowed_keys]
+        print(f"Filtered dataset: {len(all_lmdb_keys)} total episodes -> {len(self.lmdb_keys)} selected episodes")
 
         # self.lmdb_keys = all_lmdb_keys
         # print(f"Using all {len(all_lmdb_keys)} episodes (no filtering)")
 
         self.length = len(self.lmdb_keys)
 
-        # For CMA-CLIP
+        # Select tokenizer based on whether the model has a configured text_encoder.
+        # Must check the value is non-None (pydantic models always have the attribute,
+        # but it's None for GloVe-based configs like cma_vlnverse/cma).
         self.use_clip_encoders = False
         self.bert_tokenizer = bert_tokenizer
-        if self.config.model.policy_name == ['CMA_CLIP_Policy', 'Seq2Seq_Policy']:
-            self.is_clip_long = True
-            self.bert_tokenizer = bert_tokenizer
-
-        if hasattr(self.config.model, 'text_encoder'):
-            if bert_tokenizer is not None:
-                self.bert_tokenizer = bert_tokenizer
-            else:
+        self.is_clip_long = False
+        if getattr(self.config.model, 'text_encoder', None) is not None:
+            if bert_tokenizer is None:
                 self.bert_tokenizer = longclip.tokenize
             self.is_clip_long = True
 
@@ -77,27 +79,23 @@ class CMALerobotDataset(BaseDataset):
 
     def _process_instruction(self, instruction_data):
         """
-        Process instruction data that can be either string or dict format.
+        Process instruction data that can be either flat or dict format.
 
         Args:
-            instruction_data: Either a string or dict with keys {formal, natural, casual}
+            instruction_data: str instruction text, list[int] instruction tokens,
+                dict[str, str] text variants, or dict[str, list[int]] token variants.
 
         Returns:
-            List of instruction strings to create samples from
+            List of instruction payloads. Dict variants are expanded in stable
+            formal/natural/casual order. Flat values are returned as one sample.
         """
         if isinstance(instruction_data, dict):
-            # Dictionary format: extract all three styles
             instructions = []
             for style in ['formal', 'natural', 'casual']:
                 if style in instruction_data:
                     instructions.append(instruction_data[style])
-            return instructions if instructions else [str(instruction_data)]
-        elif isinstance(instruction_data, str):
-            # String format: return as single-element list
-            return [instruction_data]
-        else:
-            # Fallback: convert to string
-            return [str(instruction_data)]
+            return instructions if instructions else list(instruction_data.values())
+        return [instruction_data]
 
     def _load_next(self):
         if len(self._preload) == 0:
@@ -138,7 +136,7 @@ class CMALerobotDataset(BaseDataset):
                         else:
                             if (
                                 len(data['camera_info']) == 0
-                                or len(data['rgb_features']) < self.config.il.Filter_failure.min_rgb_nums
+                                or len(data['rgb_features']) < self.config.il.filter_failure.min_rgb_nums
                             ):
                                 continue
                     if finish_status == 'stuck':
@@ -159,40 +157,40 @@ class CMALerobotDataset(BaseDataset):
                         if 'depth_features' in data.keys():
                             data['depth_features'] = data['depth_features'][:-drop_last_frame_nums]
 
-                    # convert yaw from [-2pi,2pi] to [-pi, pi]
-                    yaws = np.array(data['robot_info']['yaw']).copy()
-                    for yaw_i, yaw in enumerate(data['robot_info']['yaw']):
-                        yaw = yaw % (2 * np.pi)
-                        if yaw > np.pi:
-                            yaw -= 2 * np.pi
-                        yaws[yaw_i] = yaw
+                # Keep yaw normalization and instruction construction outside filter_failure.
+                # This block was nested inside `filter_failure.use`; dedent to fix. See rdp_lerobot_dataset.py for reference. lsh
+                # convert yaw from [-2pi,2pi] to [-pi, pi]
+                yaws = np.array(data['robot_info']['yaw']).copy()
+                for yaw_i, yaw in enumerate(data['robot_info']['yaw']):
+                    yaw = yaw % (2 * np.pi)
+                    if yaw > np.pi:
+                        yaw -= 2 * np.pi
+                    yaws[yaw_i] = yaw
 
-                    episodes_in_json = data_to_load['episodes_in_json']
+                # Instruction content comes from dataset_data (preprocessed .json.gz),
+                # not from the per-trajectory meta/episodes.jsonl. Preserve the
+                # historical fan-out for dict variants.
+                episodes_in_data = self.dataset_data[key]
 
-                    # Process instructions based on format (string vs dict)
-                    for ep_idx in range(len(episodes_in_json)):
-                        if self.bert_tokenizer is not None:
-                            instruction_text = episodes_in_json[ep_idx]['instruction_text']
-                            # Get list of instructions (1 for string, 3 for dict)
-                            instructions = self._process_instruction(instruction_text)
-                        else:
-                            # For pre-tokenized data, use instruction_tokens directly
-                            instructions = [episodes_in_json[ep_idx]['instruction_tokens']]
+                for ep_idx in range(len(episodes_in_data)):
+                    inst = episodes_in_data[ep_idx]['instruction']
+                    if self.bert_tokenizer is not None:
+                        instructions = self._process_instruction(inst['instruction_text'])
+                    else:
+                        instructions = self._process_instruction(inst['instruction_tokens'])
 
-                        # Create samples for each instruction
-                        for instruction in instructions:
-                            new_data = self._create_new_data(data, yaws, instruction)
-                            if self.BRG_to_RGB:
-                                # This is for 3dgs dataset which is BRG format
-                                new_data['rgb'] = new_data['rgb'][..., ::-1]
-                                new_data['depth'] = new_data['depth'] * 100
-                            for k, v in new_data.items():
-                                if isinstance(v, np.ndarray):
-                                    new_data[k] = v[: self.config.model.max_step]
-                            new_preload.append(new_data)
-                            finish_status_list.append(finish_status)
-                            fail_reasons_list.append(fail_reason)
-                            lengths.append(len(new_data))
+                    for instruction in instructions:
+                        new_data = self._create_new_data(data, yaws, instruction)
+                        if self.BRG_to_RGB:
+                            new_data['rgb'] = new_data['rgb'][..., ::-1]
+                            new_data['depth'] = new_data['depth'] * 100
+                        for k, v in new_data.items():
+                            if isinstance(v, np.ndarray):
+                                new_data[k] = v[: self.config.model.max_step]
+                        new_preload.append(new_data)
+                        finish_status_list.append(finish_status)
+                        fail_reasons_list.append(fail_reason)
+                        lengths.append(len(new_data))
 
             if self.bert_tokenizer is not None:
                 new_preload = extract_instruction_tokens(
@@ -241,18 +239,16 @@ class CMALerobotDataset(BaseDataset):
         )
 
     def __len__(self) -> int:
-        # Determine multiplier based on dataset type
-        # coarse: 3 instruction styles (formal, natural, casual)
-        # fine: 1 instruction style (string)
-        # train (coarse+fine mixed): average of 2
-        if 'coarse' in self.lerobot_features_dir.lower():
-            multiplier = 3
-        elif 'fine' in self.lerobot_features_dir.lower():
-            multiplier = 1
-        else:
-            # train or mixed dataset
-            multiplier = 2
-        return len(self.lmdb_keys) * multiplier
+        # Count the exact number of samples yielded after dict-variant fan-out.
+        total = 0
+        for key in self.lmdb_keys:
+            for episode in self.dataset_data[key]:
+                inst = episode['instruction']
+                if self.bert_tokenizer is not None:
+                    total += len(self._process_instruction(inst['instruction_text']))
+                else:
+                    total += len(self._process_instruction(inst['instruction_tokens']))
+        return total
 
     def __iter__(self):
         worker_info = torch.utils.data.get_worker_info()

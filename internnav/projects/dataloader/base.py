@@ -13,6 +13,7 @@ class BasePathKeyDataloader:
         filter_same_trajectory,
         revise_data=True,
         filter_stairs=True,
+        **kwargs,
     ):
         self.path_key_data = {}
         self.path_key_scan = {}
@@ -25,6 +26,7 @@ class BasePathKeyDataloader:
                 filter_same_trajectory=filter_same_trajectory,
                 filter_stairs=filter_stairs,
                 dataset_type=dataset_type,
+                **kwargs,
             )
             for scan, path_list in load_data_map.items():
                 for path in path_list:

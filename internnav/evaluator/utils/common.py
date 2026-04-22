@@ -170,7 +170,7 @@ def transform_rotation_z_90degrees(rotation):
     return revised_rotation
 
 
-def load_data(dataset_root_dir, split, filter_same_trajectory=True, filter_stairs=True, dataset_type='mp3d'):
+def load_data(dataset_root_dir, split, filter_same_trajectory=True, filter_stairs=True, dataset_type='mp3d', instruction_type='formal'):
     with gzip.open(os.path.join(dataset_root_dir, split, f"{split}.json.gz"), 'rt', encoding='utf-8') as f:
         data = json.load(f)['episodes']
 
@@ -193,6 +193,20 @@ def load_data(dataset_root_dir, split, filter_same_trajectory=True, filter_stair
         for item in scene_data:
             new_item = copy.deepcopy(item)
             new_item['scan'] = scan
+            # new_item['original_start_position'] = item['start_position']
+            # new_item['original_start_rotation'] = item['start_rotation']
+            # Normalize instruction_text: if it's a dict of variants, select by instruction_type key
+            inst_text = new_item.get('instruction', {}).get('instruction_text')
+            if isinstance(inst_text, dict):
+                if instruction_type not in inst_text:
+                    raise KeyError(f"instruction_type '{instruction_type}' not found in instruction_text, available: {list(inst_text.keys())}")
+                new_item['instruction']['instruction_text'] = inst_text[instruction_type]
+            # Normalize instruction_tokens the same way
+            inst_tokens = new_item.get('instruction', {}).get('instruction_tokens')
+            if isinstance(inst_tokens, dict):
+                if instruction_type not in inst_tokens:
+                    raise KeyError(f"instruction_type '{instruction_type}' not found in instruction_tokens, available: {list(inst_tokens.keys())}")
+                new_item['instruction']['instruction_tokens'] = inst_tokens[instruction_type]
             new_item['original_start_position'] = item['start_position']
             new_item['original_start_rotation'] = item['start_rotation']
             if dataset_type == 'mp3d':

@@ -60,6 +60,11 @@ class InstructionEncoder(nn.Module):
         """
         with gzip.open(self.config.embedding_file, 'rt') as f:
             embeddings = torch.tensor(json.load(f))
+        assert embeddings.shape[0] == self.config.vocab_size, (
+            f"embedding_file {self.config.embedding_file} has {embeddings.shape[0]} rows "
+            f"but config.vocab_size={self.config.vocab_size}. Token IDs from the dataset "
+            f"must index into this matrix — a mismatch will silently garble retrieval."
+        )
         return embeddings
 
     def forward(self, observations) -> Tensor:

@@ -42,6 +42,7 @@ def split_data(dataset_cfg: EvalDatasetCfg):
     count = 0
 
     dataset_type = dataset_cfg.dataset_type
+    instruction_type = getattr(config, 'instruction_type', 'formal')
     for split_data_type in split_data_types:
         data_map = load_data(
             base_data_dir,
@@ -49,6 +50,7 @@ def split_data(dataset_cfg: EvalDatasetCfg):
             filter_same_trajectory=filter_same_trajectory,
             filter_stairs=filter_stairs,
             dataset_type=dataset_type,
+            instruction_type=instruction_type,
         )
         for scan, path_list in data_map.items():
             path_key_list = []
@@ -121,6 +123,7 @@ class ResultLogger:
             split_data_types=config.split_data_types,
             filter_stairs=config.filter_stairs,
             dataset_type=self.dataset_type,
+            instruction_type=getattr(config, 'instruction_type', 'formal'),
         )
 
     def get_split_map(
@@ -129,6 +132,7 @@ class ResultLogger:
         split_data_types,
         filter_stairs,
         dataset_type='mp3d',
+        instruction_type='formal',
     ):
         split_map = {}
         for split_data_type in split_data_types:
@@ -138,6 +142,7 @@ class ResultLogger:
                 filter_same_trajectory=False,
                 filter_stairs=filter_stairs,
                 dataset_type=dataset_type,
+                instruction_type=instruction_type,
             )
             path_key_list = []
             for scan, path_list in load_data_map.items():

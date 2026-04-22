@@ -23,7 +23,12 @@ class VLNPEMetrics(BaseMetric):
         self.shortest_path_length_calc = self.config.shortest_to_goal_distance
         self.success_distance = self.config.success_distance
         self.path_data = task_config.data
-        self.shortest_path_length = self.path_data['info']['geodesic_distance']
+        # Compute geodesic_distance on-the-fly from reference_path if not provided
+        geodesic_distance = self.path_data['info']['geodesic_distance']
+        if geodesic_distance <= 0 and 'reference_path' in self.path_data:
+            ref_path = np.array(self.path_data['reference_path'])
+            geodesic_distance = float(np.sum(np.linalg.norm(np.diff(ref_path, axis=0), axis=1)))
+        self.shortest_path_length = geodesic_distance
         self.goal_position = self.path_data['reference_path'][-1]
         self.current_path_length = 0
         self.pred_traj_list = [[]]

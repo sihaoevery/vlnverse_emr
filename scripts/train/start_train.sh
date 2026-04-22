@@ -40,8 +40,12 @@ case $MODEL in
         export CUDA_VISIBLE_DEVICES=0
         NUM_GPUS=1
         ;;
+    "cma_vlnverse")
+        export CUDA_VISIBLE_DEVICES=0
+        NUM_GPUS=1
+        ;;
     "cma_clip")
-        export CUDA_VISIBLE_DEVICES=4
+        export CUDA_VISIBLE_DEVICES=0
         NUM_GPUS=1
         ;;
     "seq2seq")
@@ -53,7 +57,7 @@ case $MODEL in
         NUM_GPUS=1
         ;;
     "seq2seq_clip")
-        export CUDA_VISIBLE_DEVICES=5
+        export CUDA_VISIBLE_DEVICES=0
         NUM_GPUS=1
         ;;
     "navdp")

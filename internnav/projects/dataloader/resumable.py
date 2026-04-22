@@ -19,6 +19,7 @@ class ResumablePathKeyDataloader(BasePathKeyDataloader):
         run_type,
         retry_list,
         filter_stairs,
+        **kwargs,
     ):
         # 加载所有数据
         super().__init__(
@@ -29,6 +30,7 @@ class ResumablePathKeyDataloader(BasePathKeyDataloader):
             filter_same_trajectory=filter_same_trajectory,
             revise_data=True,
             filter_stairs=filter_stairs,
+            **kwargs,
         )
         self.task_name = task_name
         self.run_type = run_type

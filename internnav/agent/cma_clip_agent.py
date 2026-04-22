@@ -24,6 +24,15 @@ class CmaCLIPAgent(Agent):
     def __init__(self, agent_config: AgentCfg):
         super().__init__(agent_config)
         self._model_settings = ModelCfg(**agent_config.model_settings)
+        self.tokenizer = None
+        self.max_instr_len = 200
+        if self._model_settings.text_encoder is not None and self._model_settings.text_encoder.type == 'clip-long':
+            from internnav.model.basemodel.LongCLIP.model import longclip
+            self.tokenizer = longclip.tokenize
+            self.max_instr_len = getattr(self._model_settings.text_encoder, 'max_length', 248) or 248
+            print('[CmaCLIPAgent] Using CLIP-Long on-the-fly tokenizer')
+        else:
+            print('[CmaCLIPAgent] Using pre-tokenized instruction_tokens from data')
         model_settings = self._model_settings
         set_seed_model(0)
         env_num = getattr(self._model_settings, 'env_num', 1)
@@ -90,10 +99,31 @@ class CmaCLIPAgent(Agent):
 
         # process change to here
         for ob in obs:
-            ob['instruction'] = ob['instruction_tokens']
+            instr_text = ob.get('instruction', None)
+            instr_tokens = ob.get('instruction_tokens', None)
+
+            if self.tokenizer is not None and isinstance(instr_text, str):
+                # CLIP on-the-fly tokenization from raw text — always preferred when available
+                tokens = self.tokenizer(instr_text)[0].tolist()
+                ob['instruction'] = tokens
+            else:
+                # Fallback to pre-tokenized (GloVe or legacy)
+                tokens = instr_tokens if instr_tokens is not None else instr_text
+                if isinstance(tokens, dict):
+                    raise ValueError(
+                        f"instruction_tokens is a dict (keys={list(tokens.keys())}), "
+                        "but no tokenizer is configured. Ensure instruction_type resolves "
+                        "tokens before reaching the agent, or configure a CLIP tokenizer."
+                    )
+                if tokens is None or not isinstance(tokens, (list, torch.Tensor, np.ndarray)) or len(tokens) == 0:
+                    raise ValueError(
+                        f"Invalid instruction tokens: got {type(tokens)}. "
+                        "Provide pre-tokenized data or configure a CLIP tokenizer via model_settings."
+                    )
+                instr = torch.as_tensor(tokens).long()
+                instr = instr[:self.max_instr_len]
+                ob['instruction'] = torch.nn.functional.pad(instr, (0, self.max_instr_len - instr.shape[0]), 'constant', 0)
             ob.pop('instruction_tokens', None)
-            instr = torch.tensor(ob['instruction'])
-            ob['instruction'] = torch.nn.functional.pad(instr, (0, 200 - instr.shape[0]), 'constant', 0)
         obs = batch_obs(obs, device=self.device)
 
         # need to change

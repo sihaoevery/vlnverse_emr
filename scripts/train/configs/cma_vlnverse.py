@@ -1,10 +1,10 @@
-from internnav.configs.model.cma import cma_cfg
+from internnav.configs.model.cma_vlnverse import cma_vlnverse_cfg
 from internnav.configs.trainer.eval import EvalCfg
 from internnav.configs.trainer.exp import ExpCfg
 from internnav.configs.trainer.il import FilterFailure, IlCfg, Loss
 
-cma_exp_cfg = ExpCfg(
-    name='cma_train',
+cma_vlnverse_exp_cfg = ExpCfg(
+    name='cma_vlnverse_train',
     model_name='cma',
     torch_gpu_id=0,
     torch_gpu_ids=[0],
@@ -38,13 +38,13 @@ cma_exp_cfg = ExpCfg(
         load_from_ckpt=False,
         ckpt_to_load='',
         lmdb_map_size=1e12,
-        dataset_r2r_root_dir='data/vln_pe/raw_data/vlnverse_r2r/mixed_splits',
+        dataset_r2r_root_dir='data/vln_pe/raw_data/vlnverse/mixed_splits',
         dataset_3dgs_root_dir='',
         dataset_grutopia10_root_dir='',
         lmdb_features_dir='vlnverse',
         lerobot_features_dir='data/vln_pe/traj_data/vlnverse',
         camera_name='pano_camera_0',
-        report_to='wandb',  # wandb, tensorboard, none
+        report_to='wandb',
         ddp_find_unused_parameters=True,
         filter_failure=FilterFailure(
             use=True,
@@ -55,5 +55,5 @@ cma_exp_cfg = ExpCfg(
             dist_scale=1,
         ),
     ),
-    model=cma_cfg,
+    model=cma_vlnverse_cfg,
 )
