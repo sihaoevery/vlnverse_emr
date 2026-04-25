@@ -15,7 +15,7 @@
 ```
   ┌──────────────────────┐      ┌────────────────┐      ┌─────────────────┐      ┌──────────────┐
   │  natural-language    │ ───▶ │  VLN agent     │ ───▶ │  trajectory in  │ ───▶ │  NE · SR ·   │
-  │  instruction         │      │  (CMA family)  │      │  a 3D scene     │      │  SPL · OSR   │
+  │  instruction         │      │                │      │  a 3D scene     │      │  SPL · OSR   │
   └──────────────────────┘      └────────────────┘      └─────────────────┘      └──────────────┘
        task definition              this repo                 simulator                metrics
 ```
@@ -24,30 +24,23 @@
 
 VLNverse is a large-scale, extensible benchmark for **V**ersatile, **E**mbodied, **R**ealistic **S**imulation and **E**valuation of vision-language navigation. It unifies previously fragmented navigation tasks — classic VLN, Object-Goal, and Visual-Reference navigation — under a single toolkit, with full-kinematics agents and a physics-grounded simulator. The paper is at [arXiv:2512.19021](https://arxiv.org/abs/2512.19021); see the [project page](https://sihaoevery.github.io/vlnverse/) for dataset statistics and qualitative results.
 
-**This repository** provides reference baselines (CMA family) and the training / evaluation pipeline for the VLNverse Challenge at the [ECCV 2026 EMR Workshop](https://emr-workshop.github.io/).
+**This repository** provides reference baselines  and the training / evaluation pipeline for the VLNverse Challenge at the [ECCV 2026 EMR Workshop](https://emr-workshop.github.io/).
 
 ## Quickstart
 
-```bash
-# 1. Clone
-git clone <this-repo-url> vlnverse && cd vlnverse
-git submodule update --init --recursive
-
-# 2. Install dependencies  (see Installation below for the full Isaac Sim + PyTorch setup)
-pip install -r requirements/isaac_requirements.txt -r requirements/train.txt -r requirements/eval.txt
-
-# 3. Download data  (see Dataset below) into data/vlnverse/raw_data/final_splits/
-
-# 4. Preprocess VLNverse splits (extended vocab)
-python scripts/process_final_splits.py --vocab extend
-
-# 5. Train a CMA baseline on VLNverse
-bash scripts/train/start_train.sh --model cma_vlnverse --name my_first_run
-
-# 6. Evaluate the checkpoint
-bash scripts/eval/start_eval_one_gpu.sh \
-    --config scripts/eval/configs/h1_cma_clip_cfg_vlnverse_coarse.py
-```
+1. **Clone** the repo with submodules:
+   ```bash
+   git clone --recursive https://github.com/sihaoevery/vlnverse_emr.git && cd vlnverse_emr
+   ```
+2. **Set up the environment** — Isaac Sim 4.5.0 + PyTorch 2.5.1 + project requirements. See [Installation](#installation).
+3. **Download data and checkpoints** — ~500 GB total. See [`docs/data_preparation.md`](docs/data_preparation.md).
+4. **Preprocess, train, and evaluate:**
+   ```bash
+   python scripts/process_final_splits.py --vocab extend
+   bash scripts/train/start_train.sh --model cma_vlnverse --name my_first_run
+   bash scripts/eval/start_eval_one_gpu.sh \
+       --config scripts/eval/configs/h1_cma_clip_cfg_vlnverse_coarse.py
+   ```
 
 ## Installation
 
@@ -151,7 +144,7 @@ The `--vocab extend` mode requires `data/glove/glove.6B.50d.txt` (GloVe 50-d vec
 
 ## Training — CMA family
 
-All four variants train on a single GPU via the same launcher:
+All three variants train on a single GPU via the same launcher:
 
 ```bash
 bash scripts/train/start_train.sh --model <key> --name <run_name>
