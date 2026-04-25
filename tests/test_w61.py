@@ -2,9 +2,9 @@ import os, sys
 import json
 import gzip
 
-# raw_file = 'data/vln_pe/raw_data/vlnverse/final_splits_with_distance/coarse/val_seen/val_seen.json.gz'
-raw_file = 'data/vln_pe/raw_data/val_seen/val_seen.json.gz'
-target_dir = 'data/vln_pe/raw_data/vlnverse/mixed_splits/test_w61'
+# raw_file = 'data/vlnverse/raw_data/vlnverse/final_splits_with_distance/coarse/val_seen/val_seen.json.gz'
+raw_file = 'data/vlnverse/raw_data/val_seen/val_seen.json.gz'
+target_dir = 'data/vlnverse/raw_data/vlnverse/mixed_splits/test_w61'
 
 os.makedirs(target_dir, exist_ok=True)
 

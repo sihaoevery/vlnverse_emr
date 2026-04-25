@@ -12,7 +12,7 @@ types = ['coarse', 'fine']
 instruction_types = ['formal', 'natural', 'casual']
 target_instruction_type = 'formal'
 
-target_dir = 'data/vln_pe/raw_data/vlnverse/final_splits_with_distance_formal'
+target_dir = 'data/vlnverse/raw_data/vlnverse/final_splits_with_distance_formal'
 os.makedirs(target_dir, exist_ok=True)
 
 # glove
@@ -30,7 +30,7 @@ exclude_scene = ['kujiale_0157', 'kujiale_0145', 'kujiale_0143', 'kujiale_0134']
 # 累计所有episode的距离
 # for data_type in types:
 #     for split in splits:
-#         path_file = f'data/vln_pe/raw_data/vlnverse/final_splits/{data_type}/{split}/{split}.json.gz'
+#         path_file = f'data/vlnverse/raw_data/vlnverse/final_splits/{data_type}/{split}/{split}.json.gz'
 #         with gzip.open(path_file, 'rt', encoding='utf-8') as f:
 #             data = json.load(f)
         
@@ -103,7 +103,7 @@ exclude_scene = ['kujiale_0157', 'kujiale_0145', 'kujiale_0143', 'kujiale_0134']
 # 统计每个type下每个split的数据分布
 for data_type in types:
     for split in splits:
-        path_file = f'data/vln_pe/raw_data/vlnverse/final_splits_with_distance_formal/{data_type}/{split}/{split}.json.gz'
+        path_file = f'data/vlnverse/raw_data/vlnverse/final_splits_with_distance_formal/{data_type}/{split}/{split}.json.gz'
         with gzip.open(path_file, 'rt', encoding='utf-8') as f:
             data = json.load(f)
         print(f'{split} {data_type} has {len(data["episodes"])} episodes')

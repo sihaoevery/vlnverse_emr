@@ -2,8 +2,8 @@ import gzip
 import json
 import os
 
-vlnverse_original_dir = 'data/vln_pe/raw_data/vlnverse/final_splits_with_distance_formal'
-new_dir = 'data/vln_pe/raw_data/vlnverse/final_splits_with_distance_formal/total'
+vlnverse_original_dir = 'data/vlnverse/raw_data/vlnverse/final_splits_with_distance_formal'
+new_dir = 'data/vlnverse/raw_data/vlnverse/final_splits_with_distance_formal/total'
 
 splits = ['train', 'val_seen', 'val_unseen', 'test']
 types = ['coarse', 'fine']

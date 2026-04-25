@@ -23,13 +23,13 @@ Shared behavior:
 - Guard against <pad>/<unk> literals sneaking into new_words.
 - Geodesic: test must have no reference_path (asserted); non-test computes it.
 
-Input:  data/vln_pe/raw_data/final_splits/{coarse,fine}_{train,val,val_unseen,test}.json.gz
-Output: data/vln_pe/raw_data/vlnverse/{coarse,fine}/{split}/{split}.json.gz
-        data/vln_pe/raw_data/vlnverse/mixed_splits/{split}/{split}.json.gz
-        data/vln_pe/raw_data/vlnverse/embeddings.json.gz
-        data/vln_pe/raw_data/vlnverse_r2r/{coarse,fine}/{split}/{split}.json.gz
-        data/vln_pe/raw_data/vlnverse_r2r/mixed_splits/{split}/{split}.json.gz
-        data/vln_pe/raw_data/vlnverse_r2r/embeddings.json.gz
+Input:  data/vlnverse/raw_data/final_splits/{coarse,fine}_{train,val,val_unseen,test}.json.gz
+Output: data/vlnverse/raw_data/vlnverse/{coarse,fine}/{split}/{split}.json.gz
+        data/vlnverse/raw_data/vlnverse/mixed_splits/{split}/{split}.json.gz
+        data/vlnverse/raw_data/vlnverse/embeddings.json.gz
+        data/vlnverse/raw_data/vlnverse_r2r/{coarse,fine}/{split}/{split}.json.gz
+        data/vlnverse/raw_data/vlnverse_r2r/mixed_splits/{split}/{split}.json.gz
+        data/vlnverse/raw_data/vlnverse_r2r/embeddings.json.gz
 
 Note:
 - Reported UNK rates are raw token-level rates using the same tokenizer as this script.
@@ -63,10 +63,10 @@ MIXED_SPLITS = ("train", "val_seen", "val_unseen", "test")
 
 RESERVED_TOKENS = {"<pad>", "<unk>"}
 
-INPUT_DIR = "data/vln_pe/raw_data/final_splits"
+INPUT_DIR = "data/vlnverse/raw_data/final_splits"
 OUTPUT_BASE_BY_VOCAB = {
-    "extend": "data/vln_pe/raw_data/vlnverse",
-    "r2r": "data/vln_pe/raw_data/vlnverse_r2r",
+    "extend": "data/vlnverse/raw_data/vlnverse",
+    "r2r": "data/vlnverse/raw_data/vlnverse_r2r",
 }
 BASE_VOCAB_PATH = "data/datasets/R2R_VLNCE_v1-3_preprocessed/train/train.json.gz"
 BASE_EMBEDDING_PATH = "data/datasets/R2R_VLNCE_v1-3_preprocessed/embeddings.json.gz"

@@ -59,10 +59,10 @@ jobs:
 
           # link data
           mkdir data
-          ln -s /cpfs/user/wangyukai/mp3d_data/vln_pe data/vln_pe
-          ln -s /cpfs/user/wangyukai/mp3d_data/Embodiments data/Embodiments
-          ln -s /cpfs/user/wangyukai/mp3d_data/scene_data data/scene_data
-          ln -s /cpfs/user/wangyukai/checkpoints checkpoints
+          ln -s /data/lsh/dataset/vlnverse/my_vln_pe_release data/vlnverse
+          ln -s /data/lsh/dataset/vlnverse/my_vln_pe_release/Embodiments data/Embodiments
+          mkdir -p data/scene_data
+          ln -s /mnt/6t/dataset/vlnverse_scene data/scene_data/vlnverse
 
           # run tests
           /root/miniconda3/envs/internutopia/bin/python -c "import torch,sys;print(sys.executable);print('cuda:',torch.cuda.is_available())"
