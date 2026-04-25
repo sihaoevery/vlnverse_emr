@@ -150,6 +150,6 @@ logs
 *.ckpt
 /results/
 checkpoints
-internnav/model/basemodel/LongCLIP/
+vlnverse/model/basemodel/LongCLIP/
 
 debug/

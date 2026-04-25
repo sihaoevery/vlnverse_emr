@@ -14,10 +14,10 @@ from pydantic import BaseModel
 from transformers import TrainerCallback, TrainingArguments
 import wandb
 
-from internnav.dataset.cma_lerobot_dataset import CMALerobotDataset, cma_collate_fn
-from internnav.dataset.navdp_dataset_lerobot import NavDP_Base_Datset, navdp_collate_fn
-from internnav.dataset.rdp_lerobot_dataset import RDP_LerobotDataset, rdp_collate_fn
-from internnav.model import (
+from vlnverse.dataset.cma_lerobot_dataset import CMALerobotDataset, cma_collate_fn
+from vlnverse.dataset.navdp_dataset_lerobot import NavDP_Base_Datset, navdp_collate_fn
+from vlnverse.dataset.rdp_lerobot_dataset import RDP_LerobotDataset, rdp_collate_fn
+from vlnverse.model import (
     CMAModelConfig,
     CMANet,
     NavDPModelConfig,
@@ -27,9 +27,9 @@ from internnav.model import (
     Seq2SeqModelConfig,
     Seq2SeqNet,
 )
-from internnav.model.utils.logger import MyLogger
-from internnav.model.utils.utils import load_dataset
-from internnav.trainer import CMATrainer, NavDPTrainer, RDPTrainer
+from vlnverse.model.utils.logger import MyLogger
+from vlnverse.model.utils.utils import load_dataset
+from vlnverse.trainer import CMATrainer, NavDPTrainer, RDPTrainer
 from scripts.train.configs import (
     cma_clip_exp_cfg,
     cma_exp_cfg,

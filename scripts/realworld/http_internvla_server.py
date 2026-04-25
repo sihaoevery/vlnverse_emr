@@ -8,7 +8,7 @@ import numpy as np
 from flask import Flask, jsonify, request
 from PIL import Image
 
-from internnav.agent.internvla_n1_agent_realworld import InternVLAN1AsyncAgent
+from vlnverse.agent.internvla_n1_agent_realworld import InternVLAN1AsyncAgent
 
 app = Flask(__name__)
 idx = 0

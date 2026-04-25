@@ -9,9 +9,9 @@ from transformers import (
     Qwen2_5_VLForConditionalGeneration,
 )
 
-from internnav.habitat_extensions.evaluator import VLNEvaluator
-from internnav.model.basemodel.internvla_n1.internvla_n1 import InternVLAN1ForCausalLM
-from internnav.utils.dist import *
+from vlnverse.habitat_extensions.evaluator import VLNEvaluator
+from vlnverse.model.basemodel.internvla_n1.internvla_n1 import InternVLAN1ForCausalLM
+from vlnverse.utils.dist import *
 
 
 def parse_args():

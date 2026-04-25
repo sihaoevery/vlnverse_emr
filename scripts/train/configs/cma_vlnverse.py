@@ -1,7 +1,7 @@
-from internnav.configs.model.cma_vlnverse import cma_vlnverse_cfg
-from internnav.configs.trainer.eval import EvalCfg
-from internnav.configs.trainer.exp import ExpCfg
-from internnav.configs.trainer.il import FilterFailure, IlCfg, Loss
+from vlnverse.configs.model.cma_vlnverse import cma_vlnverse_cfg
+from vlnverse.configs.trainer.eval import EvalCfg
+from vlnverse.configs.trainer.exp import ExpCfg
+from vlnverse.configs.trainer.il import FilterFailure, IlCfg, Loss
 
 cma_vlnverse_exp_cfg = ExpCfg(
     name='cma_vlnverse_train',

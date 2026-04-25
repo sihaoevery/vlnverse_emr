@@ -18,9 +18,9 @@ from transformers import (
     AutoProcessor,
 )
 
-from internnav.habitat_extensions.evaluator_single import VLNEvaluator
-from internnav.model.basemodel.internvla_n1.internvla_n1 import InternVLAN1ForCausalLM
-from internnav.utils.dist import *
+from vlnverse.habitat_extensions.evaluator_single import VLNEvaluator
+from vlnverse.model.basemodel.internvla_n1.internvla_n1 import InternVLAN1ForCausalLM
+from vlnverse.utils.dist import *
 
 PROJECT_ROOT_PATH = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(PROJECT_ROOT_PATH)
@@ -128,7 +128,7 @@ class BackendServer:
             data_dict = json.loads(data)
             if data_dict.get("task_type") == "vln_eval":
                 print("=======VLN Eval Task=======")
-                cache_dir = f"/tmp/InternNav/.triton"
+                cache_dir = f"/tmp/VLNverse/.triton"
                 os.makedirs(cache_dir, exist_ok=True)
                 os.chmod(cache_dir, 0o777)
 

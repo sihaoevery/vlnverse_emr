@@ -1,5 +1,5 @@
-from internnav.configs.agent import AgentCfg
-from internnav.configs.evaluator import (
+from vlnverse.configs.agent import AgentCfg
+from vlnverse.configs.evaluator import (
     EnvCfg,
     EvalCfg,
     EvalDatasetCfg,
@@ -11,7 +11,8 @@ eval_cfg = EvalCfg(
     agent=AgentCfg(
         server_port=8087,
         model_name='cma_clip',
-        ckpt_path='checkpoints/20251109_vlnverse_cma_clip/ckpts/checkpoint-610240',
+        #ckpt_path='checkpoints/20251109_vlnverse_cma_clip/ckpts/checkpoint-610240',
+        ckpt_path='checkpoints/cma_clip_vlnverse_test/ckpts/checkpoint-634240',
         model_settings={},
     ),
     env=EnvCfg(
@@ -22,7 +23,8 @@ eval_cfg = EvalCfg(
         },
     ),
     task=TaskCfg(
-        task_name='20251111_cma_clip_flash_vlnverseCoarse_ckpt610240',
+        #task_name='cma_clip_flash_vlnverseCoarse_ckpt293336',
+        task_name='cma_clip_flash_vlnverseCoarse_ckpt293336_spl',
         task_settings={
             'env_num': 1,
             'use_distributed': False,
@@ -44,10 +46,13 @@ eval_cfg = EvalCfg(
         dataset_type="kujiale",
         dataset_settings={
             # 'base_data_dir': 'data/vln_pe/raw_data/vlnverse/mixed_splits',
-            'base_data_dir': 'data/vln_pe/raw_data/vlnverse/final_splits_with_distance_formal/coarse',
-            'split_data_types': ['val_unseen', 'val_seen', 'test'],
+            #'base_data_dir': 'data/vln_pe/raw_data/vlnverse/final_splits_with_distance_formal/coarse',
+            'base_data_dir': 'data/vln_pe/raw_data/vlnverse/coarse',
+            #'split_data_types': ['val_unseen', 'val_seen', 'test'],
+            'split_data_types': ['val_unseen', 'val_seen', ],
             # 'split_data_types': ['test_w61'],
             'filter_stairs': False,
+            'instruction_type': 'formal',
         },
     ),
 )

@@ -4,8 +4,8 @@ import sys
 
 from real_world_env import RealWorldEnv
 
-from internnav.agent.utils.client import AgentClient
-from internnav.configs.evaluator.default_config import get_config
+from vlnverse.agent.utils.client import AgentClient
+from vlnverse.configs.evaluator.default_config import get_config
 
 
 def parse_args():

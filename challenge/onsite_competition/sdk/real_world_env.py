@@ -1,7 +1,7 @@
 from cam import AlignedRealSense
 from control import DiscreteRobotController
 
-from internnav.env import Env
+from vlnverse.env import Env
 
 
 class RealWorldEnv(Env):

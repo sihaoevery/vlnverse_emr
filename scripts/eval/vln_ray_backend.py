@@ -209,7 +209,7 @@ class BackendServer:
             data_dict = json.loads(data)
             if data_dict.get("task_type") == "vln_eval":
                 print("=======VLN Eval Task=======")
-                cache_dir = f"/tmp/InternNav/.triton"
+                cache_dir = f"/tmp/VLNverse/.triton"
                 os.makedirs(cache_dir, exist_ok=True)
                 os.chmod(cache_dir, 0o777)
 
@@ -227,7 +227,7 @@ class BackendServer:
                 cmd = [
                     "python",
                     "-u",
-                    "internnav/habitat_extensions/evaluator_single.py",
+                    "vlnverse/habitat_extensions/evaluator_single.py",
                     "--model_path",
                     model_path,
                     "--predict_step_nums",

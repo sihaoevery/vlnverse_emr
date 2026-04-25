@@ -210,7 +210,7 @@ def get_task_result(task_id: str) -> Optional[dict]:
 
 
 def run_simulation(scene: str, prompt: str, episode: str, history: list, request: gr.Request) -> dict:
-    model = "InternNav-VLA"
+    model = "VLNverse-VLA"
 
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     scene_desc = SCENE_CONFIGS.get(scene, {}).get("description", scene)

@@ -4,8 +4,8 @@ import sys
 import numpy as np
 from save_obs import load_obs_from_meta
 
-from internnav.agent.utils.client import AgentClient
-from internnav.configs.evaluator.default_config import get_config
+from vlnverse.agent.utils.client import AgentClient
+from vlnverse.configs.evaluator.default_config import get_config
 
 
 def load_eval_cfg(config_path, attr_name='eval_cfg'):
@@ -30,8 +30,8 @@ def test_agent(cfg_path=None, obs=None):
 
 if __name__ == "__main__":
     # use your own path
-    # cfg_path = '/root/InternNav/scripts/eval/configs/h1_rdp_cfg.py'
-    cfg_path = '/root/InternNav/scripts/eval/configs/h1_internvla_n1_cfg.py'
+    # cfg_path = '/root/VLNverse/scripts/eval/configs/h1_rdp_cfg.py'
+    cfg_path = '/root/VLNverse/scripts/eval/configs/h1_internvla_n1_cfg.py'
     rs_meta_path = 'challenge/onsite_competition/captures/rs_meta.json'
 
     fake_obs_256 = {

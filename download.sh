@@ -33,5 +33,5 @@ done
 
 # huggingface-cli download InternRobotics/InternVLA-N1 \
 #   --repo-type model \
-#   --local-dir /cpfs/user/wangliuyi/code/internnav_vlnverse/checkpoints/InternVLA-N1 \
+#   --local-dir /cpfs/user/wangliuyi/code/vlnverse_vlnverse/checkpoints/InternVLA-N1 \
 #   --resume-download 

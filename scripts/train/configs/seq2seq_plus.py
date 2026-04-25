@@ -1,7 +1,7 @@
-from internnav.configs.model.seq2seq import seq2seq_cfg
-from internnav.configs.trainer.eval import EvalCfg
-from internnav.configs.trainer.exp import ExpCfg
-from internnav.configs.trainer.il import FilterFailure, IlCfg, Loss
+from vlnverse.configs.model.seq2seq import seq2seq_cfg
+from vlnverse.configs.trainer.eval import EvalCfg
+from vlnverse.configs.trainer.exp import ExpCfg
+from vlnverse.configs.trainer.il import FilterFailure, IlCfg, Loss
 
 seq2seq_plus_exp_cfg = ExpCfg(
     name='seq2seq_plus_train',

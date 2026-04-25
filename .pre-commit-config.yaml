@@ -1,5 +1,5 @@
 exclude: |
-  ^internnav/model/basemodel/LongCLIP/
+  ^vlnverse/model/basemodel/LongCLIP/
 
 repos:
   - repo: https://github.com/PyCQA/autoflake

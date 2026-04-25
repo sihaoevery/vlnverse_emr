@@ -1,6 +1,6 @@
 # from scripts.eval.configs.agent import *
-from internnav.configs.agent import AgentCfg
-from internnav.configs.evaluator import (
+from vlnverse.configs.agent import AgentCfg
+from vlnverse.configs.evaluator import (
     EnvCfg,
     EvalCfg,
     EvalDatasetCfg,
@@ -32,7 +32,7 @@ eval_cfg = EvalCfg(
             'continuous_traj': True,
             # debug
             'vis_debug': False,  # If vis_debug=True, you can get visualization results
-            'vis_debug_path': './logs/20251111-internnav-N1-vlnverse-coarse/vis_debug',
+            'vis_debug_path': './logs/20251111-vlnverse-N1-vlnverse-coarse/vis_debug',
         },
     ),
     env=EnvCfg(
@@ -43,7 +43,7 @@ eval_cfg = EvalCfg(
         },
     ),
     task=TaskCfg(
-        task_name='20251112-internnav-N1-vlnverse-coarse-val-seen',
+        task_name='20251112-vlnverse-N1-vlnverse-coarse-val-seen',
         task_settings={
             'env_num': 1,
             'use_distributed': False,  # If the others setting in task_settings, please set use_distributed = False.

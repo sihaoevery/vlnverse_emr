@@ -38,14 +38,14 @@ mkdir -p logs
 SERVER_LOG="logs/${CONFIG_PREFIX}_server.log"
 EVAL_LOG="logs/${CONFIG_PREFIX}_eval.log"
 
-processes=$(ps -ef | grep 'internnav/agent/utils/server.py' | grep -v grep | awk '{print $2}')
+processes=$(ps -ef | grep 'vlnverse/agent/utils/server.py' | grep -v grep | awk '{print $2}')
 if [ -n "$processes" ]; then
     for pid in $processes; do
         kill -9 $pid
         echo "kill: $pid"
     done
 fi
-python internnav/agent/utils/server.py --config scripts/eval/configs/challenge_kujiale_cfg.py > "$SERVER_LOG" 2>&1 &
+python vlnverse/agent/utils/server.py --config scripts/eval/configs/challenge_kujiale_cfg.py > "$SERVER_LOG" 2>&1 &
 
 
 RETRY_LIMIT=5
@@ -99,7 +99,7 @@ check_log_update() {
 start_process
 
 # terminate server process
-processes=$(ps -ef | grep 'internnav/agent/utils/server.py' | grep -v grep | awk '{print $2}')
+processes=$(ps -ef | grep 'vlnverse/agent/utils/server.py' | grep -v grep | awk '{print $2}')
 if [ -n "$processes" ]; then
     for pid in $processes; do
         kill -9 $pid

@@ -1,7 +1,7 @@
-from internnav.configs.model.cma_clip import cma_clip_cfg
-from internnav.configs.trainer.eval import EvalCfg
-from internnav.configs.trainer.exp import ExpCfg
-from internnav.configs.trainer.il import FilterFailure, IlCfg, Loss
+from vlnverse.configs.model.cma_clip import cma_clip_cfg
+from vlnverse.configs.trainer.eval import EvalCfg
+from vlnverse.configs.trainer.exp import ExpCfg
+from vlnverse.configs.trainer.il import FilterFailure, IlCfg, Loss
 
 cma_clip_exp_cfg = ExpCfg(
     name='cma_train',

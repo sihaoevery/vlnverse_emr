@@ -21,16 +21,16 @@ from pathlib import Path
 
 from test_server import start_server, stop_server
 
-from internnav.configs.agent import AgentCfg
-from internnav.configs.evaluator import (
+from vlnverse.configs.agent import AgentCfg
+from vlnverse.configs.evaluator import (
     EnvCfg,
     EvalCfg,
     EvalDatasetCfg,
     SceneCfg,
     TaskCfg,
 )
-from internnav.configs.evaluator.default_config import get_config
-from internnav.evaluator import Evaluator
+from vlnverse.configs.evaluator.default_config import get_config
+from vlnverse.evaluator import Evaluator
 
 eval_cfg = EvalCfg(
     agent=AgentCfg(

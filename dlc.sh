@@ -1,1 +1,1 @@
-cd /cpfs/user/wangliuyi/code/internnav_vlnverse && conda activate internutopia && bash scripts/eval/start_eval.sh --config scripts/eval/configs/h1_internvla_n1_cfg_vlnverse_fine.py
+cd /cpfs/user/wangliuyi/code/vlnverse_vlnverse && conda activate internutopia && bash scripts/eval/start_eval.sh --config scripts/eval/configs/h1_internvla_n1_cfg_vlnverse_fine.py

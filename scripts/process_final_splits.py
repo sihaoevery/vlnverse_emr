@@ -46,7 +46,7 @@ import numpy as np
 from nltk.tokenize import word_tokenize
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from internnav.utils.glove_embedding import pad_list, sentence_preprocess
+from vlnverse.utils.glove_embedding import pad_list, sentence_preprocess
 
 FILE_MAP = {
     "coarse_train.json.gz": ("coarse", "train"),

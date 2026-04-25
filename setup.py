@@ -42,14 +42,14 @@ with open('requirements/eval.txt', 'r') as f:
     install_requires = f.read().splitlines()
 
 setuptools.setup(
-    name='internnav',
+    name='vlnverse',
     version='0.0.1',
     packages=setuptools.find_packages(),
     author='OpenRobotLab',
     author_email='OpenRobotLab@pjlab.org.cn',
     license='Apache 2.0',
     readme='README.md',
-    description='InternNav: A benchmark evaluation framework for navigation tasks',
+    description='VLNverse: A benchmark evaluation framework for navigation tasks',
     long_description=long_description,
     long_description_content_type='text/markdown',
     python_requires='>=3.8, <=3.12',

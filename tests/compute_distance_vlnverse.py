@@ -4,7 +4,7 @@ import gzip
 import numpy as np
 import copy
 
-from internnav.utils.glove_embedding import InstructionEmbedding
+from vlnverse.utils.glove_embedding import InstructionEmbedding
 
 splits = ['train', 'val_seen', 'val_unseen', 'test']
 types = ['coarse', 'fine']

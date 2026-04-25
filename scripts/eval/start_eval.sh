@@ -32,7 +32,7 @@ SERVER_LOG="logs/${CONFIG_PREFIX}_server.log"
 EVAL_LOG="logs/${CONFIG_PREFIX}_eval.log"
 
 # Only kill server processes started with the SAME config, avoid killing others
-SERVER_PATTERN="internnav/agent/utils/server.py --config $CONFIG"
+SERVER_PATTERN="vlnverse/agent/utils/server.py --config $CONFIG"
 processes=$(pgrep -f "$SERVER_PATTERN")
 if [ -n "$processes" ]; then
     for pid in $processes; do
@@ -40,7 +40,7 @@ if [ -n "$processes" ]; then
         echo "kill server (same config): $pid"
     done
 fi
-python internnav/agent/utils/server.py --config $CONFIG > "$SERVER_LOG" 2>&1 &
+python vlnverse/agent/utils/server.py --config $CONFIG > "$SERVER_LOG" 2>&1 &
 
 
 RETRY_LIMIT=9999
@@ -71,7 +71,7 @@ start_process() {
     echo "Starting process..."
     
     # Kill and restart server.py
-    SERVER_PATTERN="internnav/agent/utils/server.py --config $CONFIG"
+    SERVER_PATTERN="vlnverse/agent/utils/server.py --config $CONFIG"
     processes=$(pgrep -f "$SERVER_PATTERN")
     if [ -n "$processes" ]; then
         for pid_to_kill in $processes; do
@@ -81,7 +81,7 @@ start_process() {
     fi
     wait 2>/dev/null  # Wait for background jobs to finish and suppress messages
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Restarting server.py..." >> "$SERVER_LOG"
-    python internnav/agent/utils/server.py --config $CONFIG >> "$SERVER_LOG" 2>&1 &
+    python vlnverse/agent/utils/server.py --config $CONFIG >> "$SERVER_LOG" 2>&1 &
     echo "Restarted server.py"
     
     # Start the main command

@@ -11,9 +11,9 @@ import time
 
 import numpy as np
 
-from internnav.configs.evaluator.default_config import get_config
-from internnav.evaluator import Evaluator
-from internnav.utils import progress_log_multi_util
+from vlnverse.configs.evaluator.default_config import get_config
+from vlnverse.evaluator import Evaluator
+from vlnverse.utils import progress_log_multi_util
 
 
 def main():
@@ -71,7 +71,7 @@ def main():
 def start_server():
     server_cmd = [
         sys.executable,
-        "internnav/agent/utils/server.py",
+        "vlnverse/agent/utils/server.py",
         "--config",
         "scripts/eval/configs/challenge_cfg.py",
     ]

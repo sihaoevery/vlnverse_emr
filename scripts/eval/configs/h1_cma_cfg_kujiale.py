@@ -1,5 +1,5 @@
-from internnav.configs.agent import AgentCfg
-from internnav.configs.evaluator import (
+from vlnverse.configs.agent import AgentCfg
+from vlnverse.configs.evaluator import (
     EnvCfg,
     EvalCfg,
     EvalDatasetCfg,
