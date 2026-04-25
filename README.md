@@ -1,255 +1,246 @@
 <div align="center">
 
-[![demo](assets/InternNav.gif "demo")](https://www.youtube.com/watch?v=fD0F1jIax5Y)
+# VLNverse
 
-[![Gradio Demo](https://img.shields.io/badge/Gradio-Demo-orange?style=flat&logo=gradio)](https://huggingface.co/spaces/InternRobotics/InternNav-Eval-Demo)
-[![doc](https://img.shields.io/badge/Document-FFA500?logo=readthedocs&logoColor=white)](https://internrobotics.github.io/user_guide/internnav/index.html)
-[![GitHub star chart](https://img.shields.io/github/stars/InternRobotics/InternNav?style=square)](https://github.com/InternRobotics/InternNav)
-[![GitHub Issues](https://img.shields.io/github/issues/InternRobotics/InternNav)](https://github.com/InternRobotics/InternNav/issues)
-<a href="https://cdn.vansin.top/taoyuan.jpg"><img src="https://img.shields.io/badge/WeChat-07C160?logo=wechat&logoColor=white" height="20" style="display:inline"></a>
-[![Discord](https://img.shields.io/discord/1373946774439591996?logo=discord)](https://discord.gg/5jeaQHUj4B)
+**Baselines for the VLNverse benchmark — [ECCV 2026 EMR Workshop Challenge](https://emr-workshop.github.io/)**
+
+[![Paper](https://img.shields.io/badge/arXiv-2512.19021-b31b1b.svg)](https://arxiv.org/abs/2512.19021)
+[![Project Page](https://img.shields.io/badge/Project-Page-blue)](https://sihaoevery.github.io/vlnverse/)
+[![Workshop](https://img.shields.io/badge/ECCV%202026-EMR%20Workshop-7B68EE)](https://emr-workshop.github.io/)
+[![Challenge](https://img.shields.io/badge/Challenge-EvalAI%20coming%20soon-lightgrey)](https://emr-workshop.github.io/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 </div>
 
-## 🏠 Introduction
+```
+  ┌──────────────────────┐      ┌────────────────┐      ┌─────────────────┐      ┌──────────────┐
+  │  natural-language    │ ───▶ │  VLN agent     │ ───▶ │  trajectory in  │ ───▶ │  NE · SR ·   │
+  │  instruction         │      │  (CMA family)  │      │  a 3D scene     │      │  SPL · OSR   │
+  └──────────────────────┘      └────────────────┘      └─────────────────┘      └──────────────┘
+       task definition              this repo                 simulator                metrics
+```
 
-InternNav is an All-in-one open-source toolbox for embodied navigation based on PyTorch, Habitat and Isaac Sim.
+## What is VLNverse
 
-### Highlights
-- Modular Support of the Entire Navigation System
+VLNverse is a large-scale, extensible benchmark for **V**ersatile, **E**mbodied, **R**ealistic **S**imulation and **E**valuation of vision-language navigation. It unifies previously fragmented navigation tasks — classic VLN, Object-Goal, and Visual-Reference navigation — under a single toolkit, with full-kinematics agents and a physics-grounded simulator. The paper is at [arXiv:2512.19021](https://arxiv.org/abs/2512.19021); see the [project page](https://sihaoevery.github.io/vlnverse/) for dataset statistics and qualitative results.
 
-We support modular customization and study of the entire navigation system, including vision-language navigation with discrete action space (VLN-CE), visual navigation (VN) given point/image/trajectory goals, and the whole VLN system with continuous trajectory outputs.
+**This repository** provides reference baselines (CMA family) and the training / evaluation pipeline for the VLNverse Challenge at the [ECCV 2026 EMR Workshop](https://emr-workshop.github.io/).
 
-- Compatibility with Mainstream Simulation Platforms
+## Quickstart
 
-The toolbox is compatible with different training and evaluation requirements, supporting different environments for the usage of mainstream simulation platforms such as Habitat and Isaac Sim.
+```bash
+# 1. Clone
+git clone <this-repo-url> vlnverse && cd vlnverse
+git submodule update --init --recursive
 
-- Comprehensive Datasets, Models and Benchmarks
+# 2. Install dependencies  (see Installation below for the full Isaac Sim + PyTorch setup)
+pip install -r requirements/isaac_requirements.txt -r requirements/train.txt -r requirements/eval.txt
 
-The toolbox supports the most comprehensive 6 datasets \& benchmarks and 10+ popular baselines, including both mainstream and our established brand new ones.
+# 3. Download data  (see Dataset below) into data/vlnverse/raw_data/final_splits/
 
-- State of the Art
+# 4. Preprocess VLNverse splits (extended vocab)
+python scripts/process_final_splits.py --vocab extend
 
-The toolbox supports the most advanced high-quality navigation dataset, InternData-N1, which includes 3k+ scenes and 830k VLN data covering diverse embodiments and scenes, and the first dual-system navigation foundation model with leading performance on all the benchmarks and zero-shot generalization capability in the real world, InternVLA-N1.
+# 5. Train a CMA baseline on VLNverse
+bash scripts/train/start_train.sh --model cma_vlnverse --name my_first_run
 
-## 🔥 News
-- [2025/09] Real-world deployment code of InternVLA-N1 is released.
-- [2025/07] We are hosting 🏆IROS 2025 Grand Challenge, stay tuned at [official website](https://internrobotics.shlab.org.cn/challenge/2025/).
-- [2025/07] InternNav v0.1.1 released.
+# 6. Evaluate the checkpoint
+bash scripts/eval/start_eval_one_gpu.sh \
+    --config scripts/eval/configs/h1_cma_clip_cfg_vlnverse_coarse.py
+```
 
-## 📋 Table of Contents
-- [🏠 Introduction](#-introduction)
-- [🔥 News](#-news)
-- [📚 Getting Started](#-getting-started)
-- [📦 Overview of Benchmark \& Model Zoo](#-overview-of-benchmark-and-model-zoo)
-- [🔧 Customization](#-customization)
-- [👥 Contribute](#-contribute)
-- [🔗 Citation](#-citation)
-- [📄 License](#-license)
-- [👏 Acknowledgements](#-acknowledgements)
+## Installation
 
-## 📚 Getting Started
+VLNverse uses **Isaac Sim 4.5.0** for continuous physics-based evaluation and **PyTorch 2.5.1 (CUDA 11.8)** for training. The full setup has four steps:
 
-Please refer to the [documentation](https://internrobotics.github.io/user_guide/internnav/quick_start/index.html) for quick start with InternNav, from installation to training or evaluating supported models.
+### 1. Download Isaac Sim 4.5.0
 
-## 📦 Overview of Benchmark and Model Zoo
-
-### Datasets \& Benchmarks
-
-<table align="center">
-  <tbody>
-    <tr align="center" valign="bottom">
-      <td>
-         <b>System2 (VLN-CE)</b>
-      </td>
-      <td>
-         <b>System1 (VN)</b>
-      </td>
-      <td>
-         <b>Whole-system (VLN)</b>
-      </td>
-   </tr>
-   <tr align="center" valign="top">
-      <td>
-         <ul>
-            <li align="left"><a href="">VLN-CE R2R</a></li>
-            <li align="left"><a href="">VLN-CE RxR</a></li>
-         </ul>
-      </td>
-      <td>
-         <ul>
-            <li align="left"><a href="">Cluttered Envs</a></li>
-            <li align="left"><a href="">GRScenes-100</a></li>
-         </ul>
-      </td>
-      <td>
-         <ul>
-            <li align="left"><a href="">VLN-CE</a></li>
-            <li align="left"><a href="">VLN-PE</a></li>
-         </ul>
-      </td>
-   </tbody>
-</table>
-
-### Models
-
-<table align="center">
-  <tbody>
-    <tr align="center" valign="bottom">
-      <td>
-         <b>System2 (VLN-CE)</b>
-      </td>
-      <td>
-         <b>System1 (VN)</b>
-      </td>
-      <td>
-         <b>Whole-system (VLN)</b>
-      </td>
-   </tr>
-   <tr align="center" valign="top">
-      <td>
-         <ul>
-            <li align="left"><a href="">StreamVLN</a></li>
-            <li align="left"><a href="">InternVLA-N1-Preview (S2)</a></li>
-            <li align="left"><a href="">InternVLA-N1 (S2)</a></li>
-         </ul>
-      </td>
-      <td>
-         <ul>
-            <li align="left"><a href="">DD-PPO</a></li>
-            <li align="left"><a href="">iPlanner</a></li>
-            <li align="left"><a href="">ViPlanner</a></li>
-            <li align="left"><a href="">GNM</a></li>
-            <li align="left"><a href="">ViNT</a></li>
-            <li align="left"><a href="">NoMad</a></li>
-            <li align="left"><a href="">NavDP</a></li>
-         </ul>
-      </td>
-      <td>
-         <ul>
-            <li align="left"><a href="">Seq2Seq</a></li>
-            <li align="left"><a href="">CMA</a></li>
-            <li align="left"><a href="">RDP</a></li>
-            <li align="left"><a href="">InternVLA-N1-Preview</a></li>
-            <li align="left"><a href="">InternVLA-N1</a></li>
-         </ul>
-      </td>
-   </tbody>
-</table>
-
-### Benchmark Results
-
-#### VLN-CE Task
-| Model  | Dataset/Benchmark | NE | OS | SR | SPL | Download |
-| ------ | ----------------- | -- | -- | --------- |  -- | --------- |
-| `InternVLA-N1 (S2)` | R2R | 4.89 | 60.6 | 55.4 | 52.1| [Model](https://huggingface.co/InternRobotics/InternVLA-N1-S2) |
-| `InternVLA-N1` | R2R | **4.83** | **63.3** | **58.2** | **54.0** | [Model](https://huggingface.co/InternRobotics/InternVLA-N1) |
-| `InternVLA-N1 (S2)` | RxR | 6.67 | 56.5 | 48.6 | 42.6 | [Model](https://huggingface.co/InternRobotics/InternVLA-N1-S2) |
-| `InternVLA-N1` | RxR | **5.91** | **60.8** | **53.5** | **46.1** | [Model](https://huggingface.co/InternRobotics/InternVLA-N1) |
-| `InternVLA-N1-Preview (S2)` | R2R | 5.09 | 60.9 | 53.7 | 49.7 | [Model](https://huggingface.co/InternRobotics/InternVLA-N1-Preview-S2) |
-| `InternVLA-N1-Preview` | R2R | **4.76** | **63.4** | **56.7** | **52.6** | [Model](https://huggingface.co/InternRobotics/InternVLA-N1-Preview) |
-| `InternVLA-N1-Preview (S2)` | RxR | 6.39 | 60.1 | 50.5 | 43.3 | [Model](https://huggingface.co/InternRobotics/InternVLA-N1-Preview-S2) |
-| `InternVLA-N1-Preview` | RxR | **5.65** | **63.2** | **53.5** | **45.7** | [Model](https://huggingface.co/InternRobotics/InternVLA-N1-Preview) |
-
-#### VLN-PE Task
-| Model  | Dataset/Benchmark | NE | OS | SR | SPL | Download |
-| ------ | ----------------- | -- | -- | -- | --- | --- |
-| `Seq2Seq` | Flash | 8.27 | 43.0 | 15.7 | 9.7 | [Model](https://huggingface.co/InternRobotics/VLN-PE) |
-| `CMA` | Flash | 7.52 | 45.0 | 24.4 | 18.2 | [Model](https://huggingface.co/InternRobotics/VLN-PE) |
-| `RDP` | Flash | 6.98 | 42.5 | 24.9 | 17.5 | [Model](https://huggingface.co/InternRobotics/VLN-PE) |
-| `InternVLA-N1-Preview` | Flash | **4.21** | **68.0** | **59.8** | **54.0** | [Model](https://huggingface.co/InternRobotics/InternVLA-N1-Preview) |
-| `InternVLA-N1` | Flash | **4.13** | **67.6** | **60.4** | **54.9** | [Model](https://huggingface.co/InternRobotics/InternVLA-N1) |
-| `Seq2Seq` | Physical | 7.88 | 28.1 | 15.1 | 10.7 | [Model](https://huggingface.co/InternRobotics/VLN-PE) |
-| `CMA` | Physical | 7.26 | 31.4 | 22.1 | 18.6 | [Model](https://huggingface.co/InternRobotics/VLN-PE) |
-| `RDP` | Physical | 6.72 | 36.9 | 25.2 | 17.7 | [Model](https://huggingface.co/InternRobotics/VLN-PE) |
-| `InternVLA-N1-Preview` | Physical | **5.31** | **49.0** | **42.6** | **35.8** | [Model](https://huggingface.co/InternRobotics/InternVLA-N1-Preview) |
-| `InternVLA-N1` | Physical | **4.73** | **56.7** | **50.6** | **43.3** | [Model](https://huggingface.co/InternRobotics/InternVLA-N1) |
-
-#### Visual Navigation Task - PointGoal Navigation
-| Model  | Dataset/Benchmark | SR | SPL | Download |
-| ------ | ----------------- | -- | -- | --------- |
-| `iPlanner` | ClutteredEnv | 84.8 | 83.6 | [Model](https://github.com/InternRobotics/NavDP?tab=readme-ov-file#%EF%B8%8F-installation-of-baseline-library) |
-| `ViPlanner` | ClutteredEnv | 72.4 | 72.3 | [Model](https://github.com/InternRobotics/NavDP?tab=readme-ov-file#%EF%B8%8F-installation-of-baseline-library) |
-| `InternVLA-N1 (S1)` | ClutteredEnv | **89.8** | **87.7** | [Model](https://github.com/InternRobotics/NavDP?tab=readme-ov-file#%EF%B8%8F-installation-of-baseline-library) |
-| `iPlanner` | InternScenes | 48.8 | 46.7 | [Model](https://github.com/InternRobotics/NavDP?tab=readme-ov-file#%EF%B8%8F-installation-of-baseline-library) |
-| `ViPlanner` | InternScenes | 54.3 | 52.5 | [Model](https://github.com/InternRobotics/NavDP?tab=readme-ov-file#%EF%B8%8F-installation-of-baseline-library) |
-| `InternVLA-N1 (S1)` | InternScenes | **65.7** | **60.7** | [Model](https://github.com/InternRobotics/NavDP?tab=readme-ov-file#%EF%B8%8F-installation-of-baseline-library) |
+Download the standalone zip from the [official Isaac Sim 4.5.0 page](https://docs.isaacsim.omniverse.nvidia.com/4.5.0/installation/download.html) and unzip it to any location — we'll refer to this path as `ISAACSIM_ROOT`.
 
 
+### 2. Create the conda environment
 
-**NOTE:**
-- The detailed benchmark results of other baselines will be updated in the next few days.
-- VLN-CE RxR benchmark and StreamVLN will be supported soon.
+```bash
+conda create -n vlnverse python=3.10 libxcb=1.14 -y
+conda activate vlnverse
+```
 
-## 🔧 Customization
+### 3. Install InternUtopia and link Isaac Sim
 
-Please refer to the [tutorial](https://internrobotics.github.io/user_guide/internnav/tutorials/index.html) for advanced usage of InternNav, including customization of datasets, models and experimental settings.
+```bash
+pip install internutopia
 
-## 👥 Contribute
+# Interactive: paste your $ISAACSIM_ROOT path when prompted.
+python -m internutopia.setup_conda_pypi
 
-If you would like to contribute to InternNav, please check out our [contribution guide]().
-For example, raising issues, fixing bugs in the framework, and adapting or adding new policies and data to the framework.
+# Reactivate so the new env vars take effect.
+conda deactivate && conda activate vlnverse
 
-**Note:** We welcome the feedback of the model's zero-shot performance when deploying in your own environment. Please show us your results and offer us your future demands regarding the model's capability. We will select the most valuable ones and collaborate with users together to solve them in the next few months :)
+cd $ISAACSIM_ROOT
+source setup_conda_env.sh
+```
 
-## 🔗 Citation
+### 4. Install PyTorch and project requirements
 
-If you find our work helpful, please cite:
+```bash
+pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 \
+    --index-url https://download.pytorch.org/whl/cu118
+
+pip install -r requirements/isaac_requirements.txt
+pip install -r requirements/train.txt
+pip install -r requirements/eval.txt
+```
+
+### 5. (Optional) Editable install
+
+```bash
+pip install -e .
+```
+
+Skip this if you only run the bundled launchers (`scripts/train/start_train.sh`, `scripts/eval/start_eval_one_gpu.sh`) — they patch `sys.path` themselves. Run it if you want to `import vlnverse` from your own scripts or notebooks outside this repo.
+
+> **Note.** `gradio` (latest, unpinned) in `requirements/isaac_requirements.txt` can clash with the pinned `fastapi==0.110.0` / `starlette==0.36.3`. If you don't need the demo UI (`scripts/eval/vln_gradio_backend.py`), comment that line out before installing.
+
+## Data & Checkpoints
+
+### Download
+
+VLNverse data spans four HuggingFace datasets plus a few small external dependencies (robot embodiments, R2R preprocessed vocab, GloVe vectors) — **~500 GB total**. The baselines additionally require two pretrained encoder checkpoints: a **DDPPO ResNet50** that initialises the depth encoder (used by every baseline) and **LongCLIP-B** for CLIP-based instruction tokenisation/encoding (e.g., `cma_clip`). See [`docs/data_preparation.md`](docs/data_preparation.md) for the full guide (multi-disk symlinks, step-by-step commands, checkpoint downloads, verification).
+
+| Dataset | Contents | Link |
+|---|---|---|
+| **Envs**           | USD scene files (~312 GB)           | [Hugging Face](https://huggingface.co/datasets/Eyz/VLNVerse_scene) |
+| **Pre-built Data** | Training & evaluation data (~179 GB)| [Hugging Face](https://huggingface.co/datasets/Eyz/VLNVerse_data)  |
+| **Scene Graph**    | Object relationships (~37 MB)       | [Hugging Face](https://huggingface.co/datasets/Eyz/SceneSummary)   |
+| **Room Meta**      | Scene metadata (~2 MB)              | [Hugging Face](https://huggingface.co/datasets/Eyz/SceneMeta)      |
+
+Pretrained checkpoints — both must be in place before training:
+
+| Checkpoint            | Used by                            | Role                                          | Target path                                                                |
+|-----------------------|------------------------------------|-----------------------------------------------|----------------------------------------------------------------------------|
+| **DDPPO ResNet50**    | all baselines      | depth-encoder                  | `checkpoints/ddppo-models/gibson-4plus-mp3d-train-val-test-resnet50.pth`   |
+| **LongCLIP-B**        | CLIP variants (e.g. `cma_clip`)    | instruction tokenization      | `checkpoints/clip-long/longclip-B.pt`                                      |
+
+### Preprocess
+
+The preprocessing script tokenises instructions and builds the vocabulary + embedding matrix. It has two modes:
+
+```bash
+# Strict R2R vocab (2504 tokens, out-of-vocab → <unk>).
+python scripts/process_final_splits.py --vocab r2r
+
+# Extended vocab: R2R prefix (2504) + GloVe-covered new VLNverse words.
+python scripts/process_final_splits.py --vocab extend
+```
+
+Outputs:
+
+```
+data/vlnverse/raw_data/
+├── vlnverse_r2r/              # --vocab r2r
+│   ├── {coarse,fine}/{train,val_seen,val_unseen,test}/*.json.gz
+│   ├── mixed_splits/…
+│   └── embeddings.json.gz     # 2504 × 50
+└── vlnverse/                  # --vocab extend
+    ├── {coarse,fine}/{train,val_seen,val_unseen,test}/*.json.gz
+    ├── mixed_splits/…
+    └── embeddings.json.gz     # (2504 + new) × 50
+```
+
+The `--vocab extend` mode requires `data/glove/glove.6B.50d.txt` (GloVe 50-d vectors). Both modes read base R2R vocab/embeddings from `data/datasets/R2R_VLNCE_v1-3_preprocessed/`.
+
+## Training — CMA family
+
+All four variants train on a single GPU via the same launcher:
+
+```bash
+bash scripts/train/start_train.sh --model <key> --name <run_name>
+```
+
+Checkpoints land in `checkpoints/<run_name>/ckpts/`, TensorBoard logs in `checkpoints/<run_name>/tensorboard/`.
+
+| `--model` key    | Text encoder            | Vocabulary                | Training data                                   | Config file                                    |
+| ---------------- | ----------------------- | ------------------------- | ----------------------------------------------- | ---------------------------------------------- |
+| `cma`            | GloVe (50-d) + LSTM     | R2R 2504 (OOV → `<unk>`)  | `data/vlnverse/raw_data/vlnverse_r2r/mixed_splits` | `scripts/train/configs/cma.py`                 |          |
+| `cma_vlnverse`   | GloVe (50-d) + LSTM     | VLNverse extended         | `data/vlnverse/raw_data/vlnverse/mixed_splits`    | `scripts/train/configs/cma_vlnverse.py`        |
+| `cma_clip`       | LongCLIP text encoder   | — (CLIP tokeniser)        | `data/vlnverse/raw_data/vlnverse/mixed_splits`    | `scripts/train/configs/cma_clip_vlnverse.py`   |
+
+Hyperparameters (epochs, batch size, learning rate, eval cadence) live in the config files above — edit them directly to tune a run.
+
+## Evaluation
+
+```bash
+bash scripts/eval/start_eval_one_gpu.sh \
+    --config scripts/eval/configs/h1_<model>_cfg_vlnverse_<granularity>.py
+```
+
+The launcher starts the agent server (`vlnverse/agent/utils/server.py`) and the evaluator (`scripts/eval/eval.py`). To evaluate a specific checkpoint, edit `agent.ckpt_path` in your config file to point at `checkpoints/<run_name>/ckpts/checkpoint-<step>`.
+
+Available CMA eval configs:
+
+- `scripts/eval/configs/h1_cma_cfg.py` — CMA on the R2R-vocab splits
+- `scripts/eval/configs/h1_cma_clip_cfg_vlnverse_coarse.py` — CLIP-CMA on VLNverse (coarse)
+- `scripts/eval/configs/h1_cma_clip_cfg_vlnverse_fine.py` — CLIP-CMA on VLNverse (fine)
+
+Metrics (NE, SR, SPL, OSR, TL) and per-episode rollouts are written under `logs/<task_name>/`.
+
+## Repo layout
+
+```
+vlnverse/             # core package — imported as `import vlnverse`
+├── agent/            # inference agents (CMA, CMA-CLIP, Seq2Seq, RDP, …)
+├── dataset/          # LeRobot-backed training datasets
+├── model/            # neural networks (instruction / visual encoders, policy heads)
+├── trainer/          # IL training loops
+├── evaluator/        # VLN-PE evaluation harness
+├── env/              # Habitat / InternUtopia env adapters
+├── configs/          # Pydantic config classes (model / trainer / evaluator)
+└── projects/         # simulator extensions (InternUtopia VLN extension, dataloaders)
+
+scripts/
+├── process_final_splits.py     # VLNverse data preprocessing (run first)
+├── train/                      # training launchers + per-model configs
+└── eval/                       # evaluation launchers + per-task configs
+
+data/                 # datasets & assets (not tracked)
+checkpoints/          # training outputs (not tracked)
+logs/                 # evaluation outputs (not tracked)
+tests/                # unit / integration tests
+```
+
+## Challenge submission
+
+> 🚧 **The EvalAI submission portal and format will be announced on the [workshop page](https://emr-workshop.github.io/).**
+>
+> Key dates (see workshop site for the canonical schedule):
+> - Paper submission: **July 12, 2026**
+> - Challenge deadline: **July 31, 2026**
+
+## Citation
+
+If you use VLNverse in your research, please cite:
 
 ```bibtex
-@misc{internnav2025,
-    title = {{InternNav: InternRobotics'} open platform for building generalized navigation foundation models},
-    author = {InternNav Contributors},
-    howpublished={\url{https://github.com/InternRobotics/InternNav}},
-    year = {2025}
+@article{vlnverse2025,
+  title   = {VLNverse: A Versatile, Embodied, Realistic Benchmark for Vision-Language Navigation},
+  author  = {Lin, Sihao and Li, Zerui and Zhao, Xunyi and Zhou, Gengze and Wang, Liuyi and Wei, Rong and Tang, Rui and Li, Juncheng and Wang, Hanqing and Pang, Jiangmiao and van den Hengel, Anton and Liu, Jiajun and Wu, Qi},
+  journal = {arXiv preprint arXiv:2512.19021},
+  year    = {2025},
+  url     = {https://arxiv.org/abs/2512.19021}
 }
 ```
 
-If you use the specific pretrained models and benchmarks, please kindly cite the original papers involved in our work. Related BibTex entries of our papers are provided below.
+## License
 
-<details><summary>Related Work BibTex</summary>
+Code is released under the [MIT License](LICENSE). Dataset licenses are inherited from the underlying sources (VLN-CE, Matterport3D, HM3D, etc.) and documented with the data release.
 
-```BibTex
-@misc{internvla-n1,
-    title = {{InternVLA-N1: An} Open Dual-System Navigation Foundation Model with Learned Latent Plans},
-    author = {InternNav Team},
-    year = {2025},
-    booktitle={arXiv},
-}
-@inproceedings{vlnpe,
-  title={Rethinking the Embodied Gap in Vision-and-Language Navigation: A Holistic Study of Physical and Visual Disparities},
-  author={Wang, Liuyi and Xia, Xinyuan and Zhao, Hui and Wang, Hanqing and Wang, Tai and Chen, Yilun and Liu, Chengju and Chen, Qijun and Pang, Jiangmiao},
-  booktitle={Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},
-  year={2025}
-}
-@misc{streamvln,
-    title = {StreamVLN: Streaming Vision-and-Language Navigation via SlowFast Context Modeling},
-    author = {Wei, Meng and Wan, Chenyang and Yu, Xiqian and Wang, Tai and Yang, Yuqiang and Mao, Xiaohan and Zhu, Chenming and Cai, Wenzhe and Wang, Hanqing and Chen, Yilun and Liu, Xihui and Pang, Jiangmiao},
-    booktitle={arXiv},
-    year = {2025}
-}
-@misc{navdp,
-    title = {NavDP: Learning Sim-to-Real Navigation Diffusion Policy with Privileged Information Guidance},
-    author = {Wenzhe Cai, Jiaqi Peng, Yuqiang Yang, Yujian Zhang, Meng Wei, Hanqing Wang, Yilun Chen, Tai Wang and Jiangmiao Pang},
-    year = {2025},
-    booktitle={arXiv},
-}
-```
+## Acknowledgements
 
-</details>
+This repository builds on several excellent open-source projects:
 
-
-## 📄 License
-
-InternNav's codes are [MIT licensed](LICENSE).
-The open-sourced InternData-N1 data are under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License </a><a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /></a>.
-Other datasets like VLN-CE inherit their own distribution licenses.
-
-## 👏 Acknowledgement
-
-- [InternUtopia](https://github.com/InternRobotics/InternUtopia) (Previously `GRUtopia`): The closed-loop evaluation and GRScenes-100 data in this framework relies on the InternUtopia framework.
-- [Diffusion Policy](https://github.com/real-stanford/diffusion_policy): Diffusion policy implementation.
-- [LongCLIP](https://github.com/beichenzbc/Long-CLIP): Long-text CLIP model.
-- [VLN-CE](https://github.com/jacobkrantz/VLN-CE): Vision-and-Language Navigation in Continuous Environments based on Habitat.
-- [Qwen2.5-VL](https://github.com/QwenLM/Qwen2.5-VL): The pretrained vision-language foundation model.
-- [LeRobot](https://github.com/huggingface/lerobot): The data format used in this project largely follows the conventions of LeRobot.
+- [Habitat-lab / Habitat-sim](https://github.com/facebookresearch/habitat-lab) — discrete-environment VLN simulator
+- [InternUtopia](https://github.com/InternRobotics/InternUtopia) — physics-based continuous simulator for embodied eval
+- [VLN-CE](https://github.com/jacobkrantz/VLN-CE) — reference implementation of the CMA and Seq2Seq baselines
+- [LongCLIP](https://github.com/beichenzbc/Long-CLIP) — long-context CLIP text encoder used by `cma_clip`
+- [Diffusion Policy](https://github.com/real-stanford/diffusion_policy) — policy head used by the RDP family
+- [LeRobot](https://github.com/huggingface/lerobot) — trajectory data format
