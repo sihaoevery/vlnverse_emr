@@ -44,7 +44,7 @@ eval_cfg = EvalCfg(
         dataset_type="kujiale",
         dataset_settings={
             # 'base_data_dir': 'data/vlnverse/raw_data/vlnverse/mixed_splits',
-            'base_data_dir': 'data/vlnverse/raw_data/vlnverse/final_splits_with_distance_formal/fine',
+            'base_data_dir': 'data/vlnverse/raw_data/vlnverse/fine',
             'split_data_types': ['val_unseen', 'val_seen', 'test'],
             # 'split_data_types': ['test_w61'],
             'filter_stairs': False,
