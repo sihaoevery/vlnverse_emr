@@ -211,6 +211,8 @@ class VlnPeEvaluator(Evaluator):
                     )
                 if self.save_to_json:
                     self.result_logger.write_now_result_json()
+                # Submission JSON updated per-episode for crash-safety (atomic rename).
+                self.result_logger.write_submission_json()
                 self.result_logger.write_now_result()
                 self.runner_status[env_id] = runner_status_code.NOT_RESET
                 log.debug(f'env{env_id}: states switch to NOT_RESET.')
@@ -244,8 +246,9 @@ class VlnPeEvaluator(Evaluator):
                 trajectory_id=self.now_path_key(reset_info),
             )
             if self.vis_output:
+                # test split has no GT reference_path; visualizer accepts None.
                 self.visualize_util.trace_start(
-                    trajectory_id=self.now_path_key(reset_info), reference_path=reset_info.data['reference_path'], instruction=reset_info.data['instruction']['instruction_text']
+                    trajectory_id=self.now_path_key(reset_info), reference_path=reset_info.data.get('reference_path', []), instruction=reset_info.data['instruction']['instruction_text']
                 )
         return False, reset_infos
 
@@ -260,8 +263,9 @@ class VlnPeEvaluator(Evaluator):
                 trajectory_id=self.now_path_key(info),
             )
             if self.vis_output:
+                # test split has no GT reference_path; visualizer accepts None.
                 self.visualize_util.trace_start(
-                    trajectory_id=self.now_path_key(info), reference_path=info.data['reference_path'], instruction=info.data['instruction']['instruction_text']
+                    trajectory_id=self.now_path_key(info), reference_path=info.data.get('reference_path', []), instruction=info.data['instruction']['instruction_text']
                 )
         log.info('start new episode!')
 

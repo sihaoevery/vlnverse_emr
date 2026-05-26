@@ -38,8 +38,10 @@ class BasePathKeyDataloader:
                     episode_id = path['episode_id']
                     path_key = f'{trajectory_id}_{episode_id}'
                     path['start_position'] += robot_offset
-                    for i, _ in enumerate(path['reference_path']):
-                        path['reference_path'][i] += robot_offset
+                    # test split has no GT reference_path; skip the per-waypoint offset.
+                    if 'reference_path' in path:
+                        for i, _ in enumerate(path['reference_path']):
+                            path['reference_path'][i] += robot_offset
                     self.path_key_data[path_key] = path
                     self.path_key_scan[path_key] = scan
                     self.path_key_split[path_key] = split_data_type

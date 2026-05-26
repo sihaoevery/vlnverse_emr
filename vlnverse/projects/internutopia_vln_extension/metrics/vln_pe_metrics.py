@@ -23,13 +23,20 @@ class VLNPEMetrics(BaseMetric):
         self.shortest_path_length_calc = self.config.shortest_to_goal_distance
         self.success_distance = self.config.success_distance
         self.path_data = task_config.data
-        # Compute geodesic_distance on-the-fly from reference_path if not provided
-        geodesic_distance = self.path_data['info']['geodesic_distance']
-        if geodesic_distance <= 0 and 'reference_path' in self.path_data:
-            ref_path = np.array(self.path_data['reference_path'])
-            geodesic_distance = float(np.sum(np.linalg.norm(np.diff(ref_path, axis=0), axis=1)))
-        self.shortest_path_length = geodesic_distance
-        self.goal_position = self.path_data['reference_path'][-1]
+        # test split has no GT (no reference_path/goals/info); skip GT-derived metrics.
+        # Robust to missing key, None, or empty list.
+        self.is_test = not bool(self.path_data.get('reference_path'))
+        if self.is_test:
+            self.shortest_path_length = -1
+            self.goal_position = None
+        else:
+            # Compute geodesic_distance on-the-fly from reference_path if not provided
+            geodesic_distance = self.path_data['info']['geodesic_distance']
+            if geodesic_distance <= 0:
+                ref_path = np.array(self.path_data['reference_path'])
+                geodesic_distance = float(np.sum(np.linalg.norm(np.diff(ref_path, axis=0), axis=1)))
+            self.shortest_path_length = geodesic_distance
+            self.goal_position = self.path_data['reference_path'][-1]
         self.current_path_length = 0
         self.pred_traj_list = [[]]
         self.metrics = {}
@@ -87,41 +94,47 @@ class VLNPEMetrics(BaseMetric):
                 current_position
             )  # trajectory array, consider calculation to complete trajectory
 
-            # calculate NE, every round needs
-            self.ne = np.linalg.norm(current_position[:2] - self.goal_position[:2])
+            if not self.is_test:
+                # calculate NE, every round needs
+                self.ne = np.linalg.norm(current_position[:2] - self.goal_position[:2])
 
-            # OSR check if it has ever been successful
-            self.shortest_path_length_calc = min(self.shortest_path_length_calc, self.ne)
+                # OSR check if it has ever been successful
+                self.shortest_path_length_calc = min(self.shortest_path_length_calc, self.ne)
 
     def calc(self):  # last
-        self.metrics['shortest_path_length'] = self.shortest_path_length
-        # calculate success distance
-        self.metrics['NE'] = self.ne
-        self.metrics['success'] = float(self.ne < self.success_distance)
-
-        # OSR check if it has ever been successful
-        self.metrics['osr'] = float(self.shortest_path_length_calc < self.success_distance)
+        if self.is_test:
+            # No GT: placeholder values, scored offline by the user
+            self.metrics['shortest_path_length'] = -1
+            self.metrics['NE'] = -1
+            self.metrics['success'] = -1
+            self.metrics['osr'] = -1
+            self.metrics['spl'] = -1
+            self.metrics['ndtw'] = -1
+        else:
+            self.metrics['shortest_path_length'] = self.shortest_path_length
+            self.metrics['NE'] = self.ne
+            self.metrics['success'] = float(self.ne < self.success_distance)
+            self.metrics['osr'] = float(self.shortest_path_length_calc < self.success_distance)
+            self.metrics['spl'] = (
+                self.metrics['success']
+                * self.shortest_path_length
+                / max(self.current_path_length, self.shortest_path_length)
+                if self.current_path_length > 0
+                else 0
+            )
+            self.metrics['ndtw'] = self._calc_ndtw()
 
         # calculate TL, trajectory total length
         self.metrics['TL'] = self.current_path_length
-
-        # SPL
-        self.metrics['spl'] = (
-            self.metrics['success']
-            * self.shortest_path_length
-            / max(self.current_path_length, self.shortest_path_length)
-            if self.current_path_length > 0
-            else 0
-        )
-
-        # calculate NDTW
-        self.metrics['ndtw'] = self._calc_ndtw()
         self.metrics['steps'] = self.sim_step
 
         self.metrics['episode_id'] = self.path_data['episode_id']  # episode ID
         self.metrics['trajectory_id'] = self.path_data['trajectory_id']  # trajectory ID
         self.metrics['fail_reason'] = self.fail_reason
-        self.metrics['reference_path'] = self.path_data['reference_path']
+        self.metrics['reference_path'] = self.path_data.get('reference_path', [])
         self.metrics['reference_path'] = np.array(self.metrics['reference_path']).tolist()
+        # Predicted trajectory + radius for submission JSON; scorer uses xy of pred_path.
+        self.metrics['pred_path'] = [list(map(float, p)) for p in self.pred_traj_list[0]]
+        self.metrics['success_distance'] = float(self.success_distance)
 
         return [self.metrics]
