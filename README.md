@@ -24,7 +24,7 @@
 
 VLNverse is a large-scale, extensible benchmark for **V**ersatile, **E**mbodied, **R**ealistic **S**imulation and **E**valuation of vision-language navigation. It unifies previously fragmented navigation tasks — classic VLN, Object-Goal, and Visual-Reference navigation — under a single toolkit, with full-kinematics agents and a physics-grounded simulator. The paper is at [arXiv:2512.19021](https://arxiv.org/abs/2512.19021); see the [project page](https://sihaoevery.github.io/vlnverse/) for dataset statistics and qualitative results.
 
-**This repository** provides reference baselines  and the training / evaluation pipeline for the VLNverse Challenge at the [ECCV 2026 EMR Workshop](https://emr-workshop.github.io/).
+**This repository** provides reference baselines and the training / evaluation pipeline for the VLNverse Challenge at the [ECCV 2026 EMR Workshop](https://emr-workshop.github.io/).
 
 ## Quickstart
 
@@ -37,14 +37,14 @@ VLNverse is a large-scale, extensible benchmark for **V**ersatile, **E**mbodied,
 4. **Preprocess, train, and evaluate:**
    ```bash
    python scripts/process_final_splits.py --vocab extend
-   bash scripts/train/start_train.sh --model cma_vlnverse --name my_first_run
+   bash scripts/train/start_train.sh --model cma_clip --name my_first_run
    bash scripts/eval/start_eval_one_gpu.sh \
        --config scripts/eval/configs/h1_cma_clip_cfg_vlnverse_coarse.py
    ```
 
 ## Installation
 
-VLNverse uses **Isaac Sim 4.5.0** for continuous physics-based evaluation and **PyTorch 2.5.1 (CUDA 11.8)** for training. The full setup has four steps:
+VLNverse uses **Isaac Sim 4.5.0** for continuous physics-based evaluation and **PyTorch 2.5.1 (CUDA 11.8)** for training. The main setup has four steps, plus an optional editable install:
 
 ### 1. Download Isaac Sim 4.5.0
 
@@ -98,7 +98,7 @@ Skip this if you only run the bundled launchers (`scripts/train/start_train.sh`,
 
 ### Download
 
-VLNverse data spans four HuggingFace datasets plus a few small external dependencies (robot embodiments, R2R preprocessed vocab, GloVe vectors) — **~500 GB total**. The baselines additionally require two pretrained encoder checkpoints: a **DDPPO ResNet50** that initialises the depth encoder (used by every baseline) and **LongCLIP-B** for CLIP-based instruction tokenisation/encoding (e.g., `cma_clip`). See [`docs/data_preparation.md`](docs/data_preparation.md) for the full guide (multi-disk symlinks, step-by-step commands, checkpoint downloads, verification).
+VLNverse data spans four HuggingFace datasets plus a few small external dependencies (robot embodiments, R2R preprocessed vocab, GloVe vectors) — **~500 GB total**. The baselines additionally require two pretrained encoder checkpoints: a **DDPPO ResNet50** depth encoder and **LongCLIP-B** for CLIP-based models. See [`docs/data_preparation.md`](docs/data_preparation.md) for the full guide (multi-disk symlinks, step-by-step commands, checkpoint downloads, verification).
 
 | Dataset | Contents | Link |
 |---|---|---|
@@ -112,7 +112,7 @@ Pretrained checkpoints — both must be in place before training:
 | Checkpoint            | Used by                            | Role                                          | Target path                                                                |
 |-----------------------|------------------------------------|-----------------------------------------------|----------------------------------------------------------------------------|
 | **DDPPO ResNet50**    | all baselines      | depth-encoder                  | `checkpoints/ddppo-models/gibson-4plus-mp3d-train-val-test-resnet50.pth`   |
-| **LongCLIP-B**        | CLIP variants (e.g. `cma_clip`)    | instruction tokenization      | `checkpoints/clip-long/longclip-B.pt`                                      |
+| **LongCLIP-B**        | CLIP-based baselines               | instruction tokenization      | `checkpoints/clip-long/longclip-B.pt`                                      |
 
 ### Preprocess
 
@@ -144,7 +144,7 @@ The `--vocab extend` mode requires `data/glove/glove.6B.50d.txt` (GloVe 50-d vec
 
 ## Training
 
-All baselines train on a single GPU via the same launcher:
+All baselines use the same launcher; GPU count depends on the model:
 
 ```bash
 bash scripts/train/start_train.sh --model <key> --name <run_name>
@@ -171,7 +171,6 @@ Checkpoints land in `checkpoints/<run_name>/ckpts/`, TensorBoard logs in `checkp
 
 | `--model` key    | Text encoder            | Vocabulary                | Training data                                      | Config file                                          |
 | ---------------- | ----------------------- | ------------------------- | -------------------------------------------------- | ---------------------------------------------------- |
-| `rdp`            | GloVe (50-d) + LSTM     | R2R 2504 (OOV → `<unk>`)  | `data/vlnverse/raw_data/vlnverse_r2r/mixed_splits` | `scripts/train/configs/rdp.py`                       |
 | `rdp_vlnverse`   | LongCLIP text encoder   | — (CLIP tokeniser)        | `data/vlnverse/raw_data/vlnverse/mixed_splits`     | `scripts/train/configs/rdp_vlnverse.py`              |
 
 RDP uses 4 GPUs by default (see `CUDA_VISIBLE_DEVICES` in `start_train.sh`); the other families use 1.
@@ -193,9 +192,8 @@ Available eval configs:
 - `scripts/eval/configs/h1_cma_clip_cfg_vlnverse_{coarse,fine}.py` — CLIP-CMA on VLNverse
 - `scripts/eval/configs/h1_seq2seq_cfg.py` — Seq2Seq on the R2R-vocab splits (MP3D scenes)
 - `scripts/eval/configs/h1_seq2seq_cfg_vlnverse_{coarse,fine}.py` — Seq2Seq-CLIP on VLNverse
-- `scripts/eval/configs/h1_rdp_cfg.py` — RDP on the R2R-vocab splits (MP3D scenes)
 - `scripts/eval/configs/h1_rdp_cfg_vlnverse_{coarse,fine,fine_train}.py` — RDP on VLNverse (`_fine_train` evaluates on the train split as a sanity check)
-- `scripts/eval/configs/h1_rdp_cfg_vlnverse_fine_parallel.py` — RDP on VLNverse fine with `env_num=2, proc_num=2` for multi-env eval. ⚠️ **Known to deadlock**: our sanity check ran 7 episodes (~1.5× single-env throughput) before the eval stalled silently (no log activity, CPU pinned at 100%); PhysX emits `Physics scenes stepping is not the same` shortly after warmup. Use only if you can debug parallel-Isaac issues — the single-env configs are the reliable path.
+- `scripts/eval/configs/h1_rdp_cfg_vlnverse_fine_parallel.py` — experimental multi-env RDP eval (`env_num=2, proc_num=2`); may deadlock in Isaac Sim, so prefer the single-env configs.
 
 All outputs land under `logs/<task_name>/`.
 
@@ -268,6 +266,6 @@ This repository builds on several excellent open-source projects:
 - [Habitat-lab / Habitat-sim](https://github.com/facebookresearch/habitat-lab) — discrete-environment VLN simulator
 - [InternUtopia](https://github.com/InternRobotics/InternUtopia) — physics-based continuous simulator for embodied eval
 - [VLN-CE](https://github.com/jacobkrantz/VLN-CE) — reference implementation of the CMA and Seq2Seq baselines
-- [LongCLIP](https://github.com/beichenzbc/Long-CLIP) — long-context CLIP text encoder used by `cma_clip`
+- [LongCLIP](https://github.com/beichenzbc/Long-CLIP) — long-context CLIP text encoder used by CLIP-based baselines
 - [Diffusion Policy](https://github.com/real-stanford/diffusion_policy) — policy head used by the RDP family
 - [LeRobot](https://github.com/huggingface/lerobot) — trajectory data format

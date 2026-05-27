@@ -5,7 +5,7 @@ conda activate internutopia
 
 # CONFIG=scripts/eval/configs/h1_internvla_n1_cfg.py
 export CUDA_VISIBLE_DEVICES=0,1
-CONFIG=scripts/eval/configs/h1_rdp_cfg.py
+CONFIG=scripts/eval/configs/h1_rdp_cfg_vlnverse_coarse.py
 
 while [[ $# -gt 0 ]]; do
     case $1 in

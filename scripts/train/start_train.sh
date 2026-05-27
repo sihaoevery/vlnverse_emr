@@ -2,7 +2,7 @@
 
 # Default values
 NAME=rdp_train_kujiale20251109
-MODEL=rdp
+MODEL=rdp_vlnverse
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -24,10 +24,6 @@ done
 
 # Set GPU devices and NUM_GPUS
 case $MODEL in
-    "rdp")
-        export CUDA_VISIBLE_DEVICES=0,1,2,3
-        NUM_GPUS=4
-        ;;
     "rdp_vlnverse")
         export CUDA_VISIBLE_DEVICES=0,1,2,3
         NUM_GPUS=4

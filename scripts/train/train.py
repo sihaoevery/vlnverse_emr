@@ -36,7 +36,6 @@ from scripts.train.configs import (
     cma_plus_exp_cfg,
     cma_vlnverse_exp_cfg,
     navdp_exp_cfg,
-    rdp_exp_cfg,
     rdp_vlnverse_exp_cfg,
     seq2seq_clip_exp_cfg,
     seq2seq_exp_cfg,
@@ -48,7 +47,7 @@ class TrainCfg(BaseModel):
     """Training configuration class"""
 
     name: str = 'cma_train'  # Experiment name
-    model_name: str = 'cma'  # Model name, options: 'cma', 'cma_plus', 'seq2seq', 'seq2seq_plus', 'rdp', 'navdp'
+    model_name: str = 'cma'  # Model name, options: 'cma', 'cma_plus', 'cma_vlnverse', 'cma_clip', 'seq2seq', 'seq2seq_plus', 'seq2seq_clip', 'rdp_vlnverse', 'navdp'
 
 
 class CheckpointFormatCallback(TrainerCallback):
@@ -312,7 +311,6 @@ if __name__ == '__main__':
         'cma': [cma_exp_cfg, CMANet, CMAModelConfig],
         'cma_plus': [cma_plus_exp_cfg, CMANet, CMAModelConfig],
         'cma_vlnverse': [cma_vlnverse_exp_cfg, CMANet, CMAModelConfig],
-        'rdp': [rdp_exp_cfg, RDPNet, RDPModelConfig],
         'navdp': [navdp_exp_cfg, NavDPNet, NavDPModelConfig],
         'rdp_vlnverse': [rdp_vlnverse_exp_cfg, RDPNet, RDPModelConfig],
         'cma_clip': [cma_clip_exp_cfg, CMANet, CMAModelConfig],
