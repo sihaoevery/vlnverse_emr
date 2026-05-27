@@ -12,11 +12,7 @@ eval_cfg = EvalCfg(
         server_port=8081,
         model_name='rdp',
         ckpt_path='checkpoints/20251109_rdp_vlnverse_c2/ckpts/checkpoint-82001',
-        model_settings={
-            # debug
-            'vis_debug': False,  # If vis_debug=True, you can get visualization results
-            'vis_debug_path': './logs/20251111_rdp_flash_vlnverseFine_ckptC2_82001/vis_debug',
-        },
+        model_settings={},
     ),
     env=EnvCfg(
         env_type='vln_pe',
@@ -46,8 +42,7 @@ eval_cfg = EvalCfg(
     dataset=EvalDatasetCfg(
         dataset_type="kujiale",
         dataset_settings={
-            # 'base_data_dir': 'data/vlnverse/raw_data/vlnverse/mixed_splits',
-            'base_data_dir': 'data/vlnverse/raw_data/vlnverse/final_splits_with_distance_formal/coarse',
+            'base_data_dir': 'data/vlnverse/raw_data/vlnverse/fine',
             'split_data_types': ['val_unseen', 'val_seen', 'test'],
             # 'split_data_types': ['test_w61'],
             'filter_stairs': False,

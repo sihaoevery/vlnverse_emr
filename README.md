@@ -142,9 +142,9 @@ data/vlnverse/raw_data/
 
 The `--vocab extend` mode requires `data/glove/glove.6B.50d.txt` (GloVe 50-d vectors). Both modes read base R2R vocab/embeddings from `data/datasets/R2R_VLNCE_v1-3_preprocessed/`.
 
-## Training — CMA family
+## Training
 
-All three variants train on a single GPU via the same launcher:
+All baselines train on a single GPU via the same launcher:
 
 ```bash
 bash scripts/train/start_train.sh --model <key> --name <run_name>
@@ -152,11 +152,29 @@ bash scripts/train/start_train.sh --model <key> --name <run_name>
 
 Checkpoints land in `checkpoints/<run_name>/ckpts/`, TensorBoard logs in `checkpoints/<run_name>/tensorboard/`.
 
-| `--model` key    | Text encoder            | Vocabulary                | Training data                                   | Config file                                    |
-| ---------------- | ----------------------- | ------------------------- | ----------------------------------------------- | ---------------------------------------------- |
-| `cma`            | GloVe (50-d) + LSTM     | R2R 2504 (OOV → `<unk>`)  | `data/vlnverse/raw_data/vlnverse_r2r/mixed_splits` | `scripts/train/configs/cma.py`                 |          |
-| `cma_vlnverse`   | GloVe (50-d) + LSTM     | VLNverse extended         | `data/vlnverse/raw_data/vlnverse/mixed_splits`    | `scripts/train/configs/cma_vlnverse.py`        |
-| `cma_clip`       | LongCLIP text encoder   | — (CLIP tokeniser)        | `data/vlnverse/raw_data/vlnverse/mixed_splits`    | `scripts/train/configs/cma_clip_vlnverse.py`   |
+### CMA family
+
+| `--model` key    | Text encoder            | Vocabulary                | Training data                                      | Config file                                    |
+| ---------------- | ----------------------- | ------------------------- | -------------------------------------------------- | ---------------------------------------------- |
+| `cma`            | GloVe (50-d) + LSTM     | R2R 2504 (OOV → `<unk>`)  | `data/vlnverse/raw_data/vlnverse_r2r/mixed_splits` | `scripts/train/configs/cma.py`                 |
+| `cma_vlnverse`   | GloVe (50-d) + LSTM     | VLNverse extended         | `data/vlnverse/raw_data/vlnverse/mixed_splits`     | `scripts/train/configs/cma_vlnverse.py`        |
+| `cma_clip`       | LongCLIP text encoder   | — (CLIP tokeniser)        | `data/vlnverse/raw_data/vlnverse/mixed_splits`     | `scripts/train/configs/cma_clip_vlnverse.py`   |
+
+### Seq2Seq family
+
+| `--model` key    | Text encoder            | Vocabulary                | Training data                                      | Config file                                          |
+| ---------------- | ----------------------- | ------------------------- | -------------------------------------------------- | ---------------------------------------------------- |
+| `seq2seq`        | GloVe (50-d) + LSTM     | R2R 2504 (OOV → `<unk>`)  | `data/vlnverse/raw_data/vlnverse_r2r/mixed_splits` | `scripts/train/configs/seq2seq.py`                   |
+| `seq2seq_clip`   | LongCLIP text encoder   | — (CLIP tokeniser)        | `data/vlnverse/raw_data/vlnverse/mixed_splits`     | `scripts/train/configs/seq2seq_clip_vlnverse.py`     |
+
+### RDP family
+
+| `--model` key    | Text encoder            | Vocabulary                | Training data                                      | Config file                                          |
+| ---------------- | ----------------------- | ------------------------- | -------------------------------------------------- | ---------------------------------------------------- |
+| `rdp`            | GloVe (50-d) + LSTM     | R2R 2504 (OOV → `<unk>`)  | `data/vlnverse/raw_data/vlnverse_r2r/mixed_splits` | `scripts/train/configs/rdp.py`                       |
+| `rdp_vlnverse`   | LongCLIP text encoder   | — (CLIP tokeniser)        | `data/vlnverse/raw_data/vlnverse/mixed_splits`     | `scripts/train/configs/rdp_vlnverse.py`              |
+
+RDP uses 4 GPUs by default (see `CUDA_VISIBLE_DEVICES` in `start_train.sh`); the other families use 1.
 
 Hyperparameters (epochs, batch size, learning rate, eval cadence) live in the config files above — edit them directly to tune a run.
 
@@ -169,13 +187,29 @@ bash scripts/eval/start_eval_one_gpu.sh \
 
 The launcher starts the agent server (`vlnverse/agent/utils/server.py`) and the evaluator (`scripts/eval/eval.py`). To evaluate a specific checkpoint, edit `agent.ckpt_path` in your config file to point at `checkpoints/<run_name>/ckpts/checkpoint-<step>`.
 
-Available CMA eval configs:
+Available eval configs:
 
-- `scripts/eval/configs/h1_cma_cfg.py` — CMA on the R2R-vocab splits
-- `scripts/eval/configs/h1_cma_clip_cfg_vlnverse_coarse.py` — CLIP-CMA on VLNverse (coarse)
-- `scripts/eval/configs/h1_cma_clip_cfg_vlnverse_fine.py` — CLIP-CMA on VLNverse (fine)
+- `scripts/eval/configs/h1_cma_cfg.py` — CMA on the R2R-vocab splits (MP3D scenes)
+- `scripts/eval/configs/h1_cma_clip_cfg_vlnverse_{coarse,fine}.py` — CLIP-CMA on VLNverse
+- `scripts/eval/configs/h1_seq2seq_cfg.py` — Seq2Seq on the R2R-vocab splits (MP3D scenes)
+- `scripts/eval/configs/h1_seq2seq_cfg_vlnverse_{coarse,fine}.py` — Seq2Seq-CLIP on VLNverse
+- `scripts/eval/configs/h1_rdp_cfg.py` — RDP on the R2R-vocab splits (MP3D scenes)
+- `scripts/eval/configs/h1_rdp_cfg_vlnverse_{coarse,fine,fine_train}.py` — RDP on VLNverse (`_fine_train` evaluates on the train split as a sanity check)
+- `scripts/eval/configs/h1_rdp_cfg_vlnverse_fine_parallel.py` — RDP on VLNverse fine with `env_num=2, proc_num=2` for multi-env eval. ⚠️ **Known to deadlock**: our sanity check ran 7 episodes (~1.5× single-env throughput) before the eval stalled silently (no log activity, CPU pinned at 100%); PhysX emits `Physics scenes stepping is not the same` shortly after warmup. Use only if you can debug parallel-Isaac issues — the single-env configs are the reliable path.
 
-Metrics (NE, SR, SPL, OSR, TL) and per-episode rollouts are written under `logs/<task_name>/`.
+All outputs land under `logs/<task_name>/`.
+
+### Output by split type
+
+Whether a split has ground truth (`reference_path` in its JSON) drives what the evaluator can compute on-the-fly. The submission JSON is always written so the predicted trajectory can be scored offline against held-out GT.
+
+| Split                       | GT in JSON | `<dataset_type>_result.json` fields                 | `submission_<dataset_type>_<split>_<ts>.json.gz`   |
+|-----------------------------|------------|-----------------------------------------------------|----------------------------------------------------|
+| `val_seen` / `val_unseen`   | ✅ yes     | `Count`, `TL`, `FR`, `StR`, **`NE`, `OS`, `SR`, `SPL`** | predicted trajectory per episode                   |
+| `test`                      | ❌ no      | `Count`, `TL`, `FR`, `StR` + `note` pointing to submission | predicted trajectory per episode (score offline)   |
+| malformed (mixed GT)        | ⚠️ partial | `Count`, `TL`, `FR`, `StR` + `note: malformed split`  | predicted trajectory; `log.warning` at startup      |
+
+The submission JSON mirrors the GT episode schema — `episode_id` / `trajectory_id` / `scan` / `scene_id` / `start_position` / `start_rotation` / `reference_path` (predicted trajectory) / `goals.position` (stop point) / `goals.radius` (success distance) / `info.geodesic_distance = -1` — so the same scoring code that handles `val_seen` / `val_unseen` can score it after the held-out GT is released. It's written after every episode termination via atomic rename, so partial results survive crashes / SIGINT / power loss. The `<ts>` is fixed per launcher invocation, so within one run the same file is overwritten in place; restarting the eval (e.g. after a crash) produces a new timestamped file alongside the previous one.
 
 ## Repo layout
 
