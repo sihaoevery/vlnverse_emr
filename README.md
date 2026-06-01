@@ -38,7 +38,7 @@ VLNverse is a large-scale, extensible benchmark for **V**ersatile, **E**mbodied,
    ```bash
    python scripts/process_final_splits.py --vocab extend
    bash scripts/train/start_train.sh --model cma_clip --name my_first_run
-   bash scripts/eval/start_eval_one_gpu.sh \
+   bash scripts/eval/start_eval_chunked.sh \
        --config scripts/eval/configs/h1_cma_clip_cfg_vlnverse_coarse.py
    ```
 
@@ -90,7 +90,7 @@ pip install -r requirements/eval.txt
 pip install -e .
 ```
 
-Skip this if you only run the bundled launchers (`scripts/train/start_train.sh`, `scripts/eval/start_eval_one_gpu.sh`) — they patch `sys.path` themselves. Run it if you want to `import vlnverse` from your own scripts or notebooks outside this repo.
+Skip this if you only run the bundled launchers (`scripts/train/start_train.sh`, `scripts/eval/start_eval_one_gpu.sh`, `scripts/eval/start_eval_chunked.sh`) — they patch `sys.path` themselves. Run it if you want to `import vlnverse` from your own scripts or notebooks outside this repo.
 
 > **Note.** `gradio` (latest, unpinned) in `requirements/isaac_requirements.txt` can clash with the pinned `fastapi==0.110.0` / `starlette==0.36.3`. If you don't need the demo UI (`scripts/eval/vln_gradio_backend.py`), comment that line out before installing.
 
@@ -179,12 +179,21 @@ Hyperparameters (epochs, batch size, learning rate, eval cadence) live in the co
 
 ## Evaluation
 
+A launcher starts the agent server (`vlnverse/agent/utils/server.py`) and the evaluator (`scripts/eval/eval.py`). To evaluate a specific checkpoint, edit `agent.ckpt_path` in your config file to point at `checkpoints/<run_name>/ckpts/checkpoint-<step>`.
+
+There are two launchers:
+
 ```bash
+# Recommended for any full-split / unattended run (sidesteps the Isaac Sim memory stall):
+bash scripts/eval/start_eval_chunked.sh \
+    --config scripts/eval/configs/h1_<model>_cfg_vlnverse_<granularity>.py
+
+# Simpler alternative for quick / short runs:
 bash scripts/eval/start_eval_one_gpu.sh \
     --config scripts/eval/configs/h1_<model>_cfg_vlnverse_<granularity>.py
 ```
 
-The launcher starts the agent server (`vlnverse/agent/utils/server.py`) and the evaluator (`scripts/eval/eval.py`). To evaluate a specific checkpoint, edit `agent.ckpt_path` in your config file to point at `checkpoints/<run_name>/ckpts/checkpoint-<step>`.
+They handle Isaac Sim's mid-run memory stall differently, as explained below.
 
 ### Handling Isaac Sim stalls: two launchers
 
@@ -223,11 +232,6 @@ are backstops for a rare mid-episode stall that outruns the budget.
 The `24000` default is tuned for our setup (**128 GB RAM, RTX 4090**, where the stall appears
 around ~28 GB RSS); set `VLN_RSS_BUDGET_MIB` to suit your own RAM — lower for more safety
 margin, higher for fewer Isaac reboots.
-
-```bash
-bash scripts/eval/start_eval_chunked.sh \
-    --config scripts/eval/configs/h1_cma_clip_cfg_vlnverse_coarse.py
-```
 
 `start_eval_one_gpu.sh` ignores the `VLN_*` variables; with `VLN_RSS_BUDGET_MIB` unset the
 chunked logic is a no-op, so the evaluator behaves exactly as before.
