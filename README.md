@@ -307,7 +307,7 @@ If you use VLNverse in your research, please cite:
 
 ## License
 
-Code is released under the [MIT License](LICENSE). Dataset licenses are inherited from the underlying sources (VLN-CE, Matterport3D, HM3D, etc.) and documented with the data release.
+The code is released under the [MIT License](LICENSE). The VLNverse scenes and dataset are released under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) — free to use and build on for research, with attribution to VLNverse, and not for commercial use.
 
 ## Acknowledgements
 
