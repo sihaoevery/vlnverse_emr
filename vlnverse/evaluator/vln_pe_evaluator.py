@@ -1,3 +1,4 @@
+import os
 import sys
 from enum import Enum
 from pathlib import Path
@@ -177,6 +178,17 @@ class VlnPeEvaluator(Evaluator):
 
         return obs, terminated
 
+    def _self_rss_mib(self):
+        # Resident set size of this process in MiB (cheap /proc read, no psutil dep).
+        try:
+            with open('/proc/self/status') as f:
+                for line in f:
+                    if line.startswith('VmRSS:'):
+                        return int(line.split()[1]) // 1024
+        except Exception:
+            pass
+        return 0
+
     def terminate_ops(self, obs_ls, reset_infos, terminated_ls):
         finish_warmup_ls = (self.runner_status == runner_status_code.WARM_UP) & [ob['finish_action'] for ob in obs_ls]
         if np.logical_or.reduce(finish_warmup_ls):
@@ -215,7 +227,22 @@ class VlnPeEvaluator(Evaluator):
                 self.result_logger.write_submission_json()
                 self.result_logger.write_now_result()
                 self.runner_status[env_id] = runner_status_code.NOT_RESET
+                self._completed_this_run += 1
                 log.debug(f'env{env_id}: states switch to NOT_RESET.')
+
+        # Chunked restart: once RSS exceeds the budget, exit at this episode boundary
+        # (results already in lmdb) so a fresh process reclaims the accumulated scene leak;
+        # the wrapper relaunches and resume skips what's already done.
+        if self._rss_budget:
+            rss_mib = self._self_rss_mib()
+            if rss_mib >= self._rss_budget:
+                log.info(
+                    f'[chunked] exiting cleanly to reclaim memory after '
+                    f'{self._completed_this_run} episode(s) '
+                    f'(RSS {rss_mib} MiB >= VLN_RSS_BUDGET_MIB={self._rss_budget}); '
+                    f'resume continues.'
+                )
+                return True, reset_infos
 
         # need this status to reset
         reset_env_ids = np.where(self.runner_status == runner_status_code.NOT_RESET)[0].tolist()
@@ -254,6 +281,16 @@ class VlnPeEvaluator(Evaluator):
 
     def eval(self):
         print('--- VlnPeEvaluator start ---')
+        # Chunked-restart mitigation for an accumulated-scene leak: scene/PhysX collision
+        # is not freed on env.reset, so host RSS climbs every episode until a physics step
+        # stalls (OOM on low-RAM boxes, CPU-spin on high-RAM). When VLN_RSS_BUDGET_MIB=N is
+        # set (by start_eval_chunked.sh), exit cleanly once RSS exceeds N so the wrapper
+        # relaunches a fresh process and resumes via lmdb. Default 0 = disabled (unchanged
+        # behaviour for non-chunked runs).
+        self._rss_budget = int(os.environ.get('VLN_RSS_BUDGET_MIB', '0') or '0')
+        self._completed_this_run = 0
+        if self._rss_budget:
+            log.info(f'[chunked] will exit when RSS exceeds VLN_RSS_BUDGET_MIB={self._rss_budget} MiB')
         obs, reset_info = self.env.reset()
         print('obs:', obs)
         for info in reset_info:

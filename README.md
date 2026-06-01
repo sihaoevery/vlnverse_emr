@@ -186,6 +186,52 @@ bash scripts/eval/start_eval_one_gpu.sh \
 
 The launcher starts the agent server (`vlnverse/agent/utils/server.py`) and the evaluator (`scripts/eval/eval.py`). To evaluate a specific checkpoint, edit `agent.ckpt_path` in your config file to point at `checkpoints/<run_name>/ckpts/checkpoint-<step>`.
 
+### Handling Isaac Sim stalls: two launchers
+
+Isaac Sim can **stall mid-run** during long evaluations: a scene's static colliders are not
+freed on `env.reset`, so host RAM climbs every episode until one physics step hangs — OOM on
+low-RAM boxes, an unrecoverable CPU-spin on high-RAM ones. Both launchers below detect this
+and restart automatically; both resume via LMDB, so completed episodes are never re-run.
+They differ in **what triggers the restart**.
+
+**`start_eval_one_gpu.sh` — fixed inactivity timer.** A watchdog polls the eval log; if it
+stays silent for `DEADLOCK_THRESHOLD` seconds the run is killed and restarted (i.e. *after*
+a stall). Both knobs are plain variables at the top of the script.
+
+| Hyperparameter | Default | Meaning |
+|---|---|---|
+| `DEADLOCK_THRESHOLD` | `6 * 60` (6 min) | log-silence that counts as a stall → restart |
+| `MONITOR_INTERVAL` | `60` (s) | how often the watchdog checks |
+
+The timer must exceed your cold-start time, or the run keeps restarting before it begins. The
+`6 min` default is tuned for an RTX 4090 — a cold RtPso shader compile (first run on a fresh
+cache) can leave the log silent for several minutes, and slower GPUs take longer, so raise
+`DEADLOCK_THRESHOLD` to match your own hardware's startup time.
+
+**`start_eval_chunked.sh` — RSS memory budget (recommended for full / unattended runs).**
+Rather than wait for a stall, the evaluator exits cleanly *before* one, as soon as this
+process's host RSS crosses a budget; a fresh process then resumes. This adapts to scene size
+(the leak is larger for bigger scenes) and stops cleanly on "No more episodes". Two timers
+are backstops for a rare mid-episode stall that outruns the budget.
+
+| Hyperparameter (env var) | Default | Meaning |
+|---|---|---|
+| `VLN_RSS_BUDGET_MIB` | `24000`, capped to free RAM | restart once process RSS exceeds this — primary, scene-adaptive trigger |
+| `VLN_INACTIVITY_TIMEOUT` | `420` (s) | kill + resume if stdout is silent this long |
+| `VLN_CHUNK_HARDCAP` | `21600` (s, 6 h) | per-chunk wall-clock backstop |
+
+The `24000` default is tuned for our setup (**128 GB RAM, RTX 4090**, where the stall appears
+around ~28 GB RSS); set `VLN_RSS_BUDGET_MIB` to suit your own RAM — lower for more safety
+margin, higher for fewer Isaac reboots.
+
+```bash
+bash scripts/eval/start_eval_chunked.sh \
+    --config scripts/eval/configs/h1_cma_clip_cfg_vlnverse_coarse.py
+```
+
+`start_eval_one_gpu.sh` ignores the `VLN_*` variables; with `VLN_RSS_BUDGET_MIB` unset the
+chunked logic is a no-op, so the evaluator behaves exactly as before.
+
 Available eval configs:
 
 - `scripts/eval/configs/h1_cma_cfg.py` — CMA on the R2R-vocab splits (MP3D scenes)
@@ -207,7 +253,7 @@ Whether a split has ground truth (`reference_path` in its JSON) drives what the 
 | `test`                      | ❌ no      | `Count`, `TL`, `FR`, `StR` + `note` pointing to submission | predicted trajectory per episode (score offline)   |
 | malformed (mixed GT)        | ⚠️ partial | `Count`, `TL`, `FR`, `StR` + `note: malformed split`  | predicted trajectory; `log.warning` at startup      |
 
-The submission JSON mirrors the GT episode schema — `episode_id` / `trajectory_id` / `scan` / `scene_id` / `start_position` / `start_rotation` / `reference_path` (predicted trajectory) / `goals.position` (stop point) / `goals.radius` (success distance) / `info.geodesic_distance = -1` — so the same scoring code that handles `val_seen` / `val_unseen` can score it after the held-out GT is released. It's written after every episode termination via atomic rename, so partial results survive crashes / SIGINT / power loss. The `<ts>` is fixed per launcher invocation, so within one run the same file is overwritten in place; restarting the eval (e.g. after a crash) produces a new timestamped file alongside the previous one.
+The submission JSON mirrors the GT episode schema — `episode_id` / `trajectory_id` / `scan` / `scene_id` / `start_position` / `start_rotation` / `reference_path` (predicted trajectory) / `goals.position` (stop point) / `goals.radius` (success distance) / `info.geodesic_distance = -1` — so it can be scored offline against the released GT using the same `NE` / `OS` / `SR` / `SPL` definitions as `val_seen` / `val_unseen`, without re-running the simulator. It's written after every episode termination via atomic rename, so partial results survive crashes / SIGINT / power loss. The `<ts>` is fixed per launcher invocation, so within one run the same file is overwritten in place; restarting the eval (e.g. after a crash) produces a new timestamped file alongside the previous one.
 
 ## Repo layout
 
