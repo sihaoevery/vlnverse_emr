@@ -131,16 +131,20 @@ Outputs:
 ```
 data/vlnverse/raw_data/
 ├── vlnverse_r2r/              # --vocab r2r
-│   ├── {coarse,fine}/{train,val_seen,val_unseen,test}/*.json.gz
+│   ├── {coarse,fine}/{train,val_seen,val_unseen,test,challenge}/*.json.gz
 │   ├── mixed_splits/…
 │   └── embeddings.json.gz     # 2504 × 50
 └── vlnverse/                  # --vocab extend
-    ├── {coarse,fine}/{train,val_seen,val_unseen,test}/*.json.gz
+    ├── {coarse,fine}/{train,val_seen,val_unseen,test,challenge}/*.json.gz
     ├── mixed_splits/…
     └── embeddings.json.gz     # (2504 + new) × 50
 ```
 
 The `--vocab extend` mode requires `data/glove/glove.6B.50d.txt` (GloVe 50-d vectors). Both modes read base R2R vocab/embeddings from `data/datasets/R2R_VLNCE_v1-3_preprocessed/`.
+
+#### The `challenge` split
+
+`challenge` is the subset used for the EvalAI leaderboard: 150 episodes per granularity, a scene-stratified, representative sample of `test` (all 53 scenes covered; coarse and fine share no trajectory). When `scripts/challenge_subset.txt` (the published list of trajectory ids) is present, `process_final_splits.py` builds it automatically — slicing those ids straight out of the already-tokenized `test` split, so it carries the same tokens/vocab and, like `test`, has no ground truth. To evaluate on it, list `'challenge'` in a config's `split_data_types` (the eval `*_vlnverse_{coarse,fine}.py` configs already do); the dataloader resolves it to `{coarse,fine}/challenge/challenge.json.gz` by convention. Running with no GT writes a `submission_*_challenge_*.json.gz` to upload to EvalAI.
 
 ## Training
 

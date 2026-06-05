@@ -43,10 +43,17 @@ import os
 import sys
 
 import numpy as np
-from nltk.tokenize import word_tokenize
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from vlnverse.utils.glove_embedding import pad_list, sentence_preprocess
+# NLP stack (nltk + glove_embedding -> emoji) is only needed for tokenization; import it
+# lazily so the module still imports where those deps are absent.
+try:
+    from nltk.tokenize import word_tokenize
+    from vlnverse.utils.glove_embedding import pad_list, sentence_preprocess
+    _NLP_IMPORT_ERROR = None
+except ImportError as e:
+    word_tokenize = pad_list = sentence_preprocess = None
+    _NLP_IMPORT_ERROR = e
 
 FILE_MAP = {
     "coarse_train.json.gz": ("coarse", "train"),
@@ -61,9 +68,15 @@ FILE_MAP = {
 
 MIXED_SPLITS = ("train", "val_seen", "val_unseen", "test")
 
+# Splits with no ground truth: reference_path must be absent (asserted), geodesic not computed.
+BLIND_SPLITS = {"test"}
+
 RESERVED_TOKENS = {"<pad>", "<unk>"}
 
 INPUT_DIR = "data/vlnverse/raw_data/final_splits"
+# Published id list of the challenge subset. The challenge split is sliced from the
+# already-processed test split by these ids (no GT, no re-tokenization). Public.
+CHALLENGE_SUBSET_FILE = "scripts/challenge_subset.txt"
 OUTPUT_BASE_BY_VOCAB = {
     "extend": "data/vlnverse/raw_data/vlnverse",
     "r2r": "data/vlnverse/raw_data/vlnverse_r2r",
@@ -104,6 +117,49 @@ def load_glove_vectors(glove_path):
 def compute_geodesic_distance(reference_path):
     pts = np.array(reference_path)
     return float(np.sum(np.linalg.norm(np.diff(pts, axis=0), axis=1)))
+
+
+def read_challenge_subset(path):
+    # Parse challenge_subset.txt -> {'coarse': [trajectory_id...], 'fine': [...]}.
+    sel = {"coarse": [], "fine": []}
+    with open(path) as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            gran, tid = line.split("\t")[:2]
+            sel[gran].append(tid)
+    return sel
+
+
+def make_challenge_subset(output_base, subset):
+    """Slice the blind challenge split out of the already-processed test split, by id.
+
+    The challenge episodes are exactly the test episodes whose trajectory_id is listed in
+    challenge_subset.txt — same tokenized fields and vocab, no GT, no re-tokenization. Runs
+    after the test split is written, so a user can build it straight from the released data.
+    """
+    for gran in ("coarse", "fine"):
+        want = set(subset.get(gran, []))
+        if not want:
+            continue
+        test_path = os.path.join(output_base, gran, "test", "test.json.gz")
+        if not os.path.exists(test_path):
+            print(f"  [SKIP] challenge/{gran}: {test_path} not found")
+            continue
+        with gzip.open(test_path, "rt", encoding="utf-8") as f:
+            d = json.load(f)
+        picked = [e for e in d["episodes"] if str(e["trajectory_id"]) in want]
+        if len(picked) != len(want):
+            have = {str(e["trajectory_id"]) for e in d["episodes"]}
+            raise ValueError(
+                f"challenge/{gran}: {len(want - have)} id(s) not in test, e.g. {list(want - have)[:3]}"
+            )
+        out_path = os.path.join(output_base, gran, "challenge", "challenge.json.gz")
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        with gzip.open(out_path, "wt", encoding="utf-8") as f:
+            json.dump({"episodes": picked, "instruction_vocab": d["instruction_vocab"]}, f)
+        print(f"  challenge/{gran}: {len(picked)} episodes -> {out_path}")
 
 
 def flatten_instruction_texts(inst_text):
@@ -282,11 +338,16 @@ def main():
     parser.add_argument(
         "--vocab",
         choices=["r2r", "extend"],
-        required=True,
+        default=None,
         help="r2r: keep 2504 vocab unchanged (OOV -> <unk>). "
              "extend: append GloVe-covered VLNverse words after R2R prefix.",
     )
     args = parser.parse_args()
+
+    if not args.vocab:
+        parser.error("--vocab is required.")
+    if _NLP_IMPORT_ERROR is not None:
+        parser.error(f"--vocab needs the NLP stack (nltk + vlnverse deps); import failed: {_NLP_IMPORT_ERROR}")
     vocab_mode = args.vocab
     output_base = OUTPUT_BASE_BY_VOCAB[vocab_mode]
 
@@ -341,8 +402,12 @@ def main():
             print(f"  [SKIP] {input_path} not found")
             continue
         output_path = os.path.join(output_base, data_type, split, f"{split}.json.gz")
-        count = process_file(input_path, output_path, vocab, is_test=(split == "test"))
+        count = process_file(input_path, output_path, vocab, is_test=(split in BLIND_SPLITS))
         print(f"  {fname} -> {data_type}/{split}: {count} episodes")
+
+    if os.path.exists(CHALLENGE_SUBSET_FILE):
+        print("Building challenge subset (by-id slice of test)...")
+        make_challenge_subset(output_base, read_challenge_subset(CHALLENGE_SUBSET_FILE))
 
     print("Writing mixed_splits (coarse + fine)...")
     for split in MIXED_SPLITS:

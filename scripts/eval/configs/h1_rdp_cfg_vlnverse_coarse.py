@@ -44,7 +44,8 @@ eval_cfg = EvalCfg(
         dataset_type="kujiale",
         dataset_settings={
             'base_data_dir': 'data/vlnverse/raw_data/vlnverse/coarse',
-            'split_data_types': ['val_unseen', 'val_seen', 'test'],
+            # challenge = 150-ep EvalAI subset of test; swap 'challenge'->'test' for the full set.
+            'split_data_types': ['val_unseen', 'val_seen', 'challenge'],
             # 'split_data_types': ['test_w61'],
             'filter_stairs': False,
         },
