@@ -1,5 +1,6 @@
 import gzip
 import json
+import zipfile
 import os
 import sys
 from datetime import datetime
@@ -121,6 +122,9 @@ class ResultLogger:
         self.name = config.task_name
         self.lmdb_path = get_lmdb_path(self.name)
         self.dataset_type = dataset_cfg.dataset_type
+        # Granularity (coarse / fine / mixed_splits / ...) = the data dir's leaf, so the
+        # submission filename distinguishes e.g. coarse vs fine runs of the same split.
+        self.granularity = os.path.basename(config.base_data_dir.rstrip('/'))
         self.split_map, self.episode_data_map = self.get_split_map(
             base_data_dir=config.base_data_dir,
             split_data_types=config.split_data_types,
@@ -319,11 +323,19 @@ class ResultLogger:
                     'goals': {'position': stop_pos, 'radius': radius},
                     'info': {'geodesic_distance': -1},
                 })
-            out_path = f'{log_dir}/submission_{self.dataset_type}_{split}_{ts}.json.gz'
+            out_path = f'{log_dir}/submission_{self.granularity}_{split}_{ts}.json.gz'
             tmp_path = f'{out_path}.tmp'
             with gzip.open(tmp_path, 'wt', encoding='utf-8') as f:
                 json.dump({'episodes': episodes}, f)
             os.replace(tmp_path, out_path)  # atomic — no half-written files on crash
+            # Also write a stable-named zip for upload (EvalAI wants a .zip). Inner entry keeps
+            # the timestamped json.gz name, so unzipping recovers the real filename. ZIP_STORED
+            # (no recompression — the content is already gzip). Atomic via tmp + rename.
+            zip_path = f'{log_dir}/submission_{self.granularity}_{split}.json.gz.zip'
+            zip_tmp = f'{zip_path}.tmp'
+            with zipfile.ZipFile(zip_tmp, 'w', zipfile.ZIP_STORED) as zf:
+                zf.write(out_path, arcname=os.path.basename(out_path))
+            os.replace(zip_tmp, zip_path)
         self.database_read.close()
 
     def write_now_result(self):

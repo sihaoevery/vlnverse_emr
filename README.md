@@ -7,7 +7,7 @@
 [![Paper](https://img.shields.io/badge/arXiv-2512.19021-b31b1b.svg)](https://arxiv.org/abs/2512.19021)
 [![Project Page](https://img.shields.io/badge/Project-Page-blue)](https://sihaoevery.github.io/vlnverse/)
 [![Workshop](https://img.shields.io/badge/ECCV%202026-EMR%20Workshop-7B68EE)](https://emr-workshop.github.io/)
-[![Challenge](https://img.shields.io/badge/Challenge-EvalAI%20coming%20soon-lightgrey)](https://emr-workshop.github.io/)
+[![Challenge](https://img.shields.io/badge/Challenge-Codabench-blue)](https://www.codabench.org/competitions/17009/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 </div>
@@ -24,7 +24,16 @@
 
 VLNverse is a large-scale, extensible benchmark for **V**ersatile, **E**mbodied, **R**ealistic **S**imulation and **E**valuation of vision-language navigation. It unifies previously fragmented navigation tasks — classic VLN, Object-Goal, and Visual-Reference navigation — under a single toolkit, with full-kinematics agents and a physics-grounded simulator. The paper is at [arXiv:2512.19021](https://arxiv.org/abs/2512.19021); see the [project page](https://sihaoevery.github.io/vlnverse/) for dataset statistics and qualitative results.
 
+
+## Challenge submission
+
 **This repository** provides reference baselines and the training / evaluation pipeline for the VLNverse Challenge at the [ECCV 2026 EMR Workshop](https://emr-workshop.github.io/).
+
+The challenge is hosted on **[Codabench](https://www.codabench.org/competitions/17009/)**. Run the evaluator on a `challenge` split and upload the resulting `submission_<granularity>_challenge.json.gz.zip` (see [Output by split type](#output-by-split-type)) to the matching competition phase.
+
+> Key dates (see workshop site for the canonical schedule):
+> - Paper submission: **July 12, 2026**
+> - Challenge deadline: **July 31, 2026**
 
 ## Quickstart
 
@@ -144,7 +153,7 @@ The `--vocab extend` mode requires `data/glove/glove.6B.50d.txt` (GloVe 50-d vec
 
 #### The `challenge` split
 
-`challenge` is the subset used for the EvalAI leaderboard: 150 episodes per granularity, a scene-stratified, representative sample of `test` (all 53 scenes covered; coarse and fine share no trajectory). When `scripts/challenge_subset.txt` (the published list of trajectory ids) is present, `process_final_splits.py` builds it automatically — slicing those ids straight out of the already-tokenized `test` split, so it carries the same tokens/vocab and, like `test`, has no ground truth. To evaluate on it, list `'challenge'` in a config's `split_data_types` (the eval `*_vlnverse_{coarse,fine}.py` configs already do); the dataloader resolves it to `{coarse,fine}/challenge/challenge.json.gz` by convention. Running with no GT writes a `submission_*_challenge_*.json.gz` to upload to EvalAI.
+`challenge` is the subset used for the evaluation-server leaderboard: 150 episodes per granularity, a scene-stratified, representative sample of `test` (all 53 scenes covered; coarse and fine share no trajectory). When `scripts/challenge_subset.txt` (the published list of trajectory ids) is present, `process_final_splits.py` builds it automatically — slicing those ids straight out of the already-tokenized `test` split, so it carries the same tokens/vocab and, like `test`, has no ground truth. To evaluate on it, list `'challenge'` in a config's `split_data_types` (the eval `*_vlnverse_{coarse,fine}.py` configs already do); the dataloader resolves it to `{coarse,fine}/challenge/challenge.json.gz` by convention. Running with no GT writes the submission files (see [Output by split type](#output-by-split-type)); upload the zip — `submission_<granularity>_challenge.json.gz.zip` — to the evaluation server.
 
 ## Training
 
@@ -253,9 +262,9 @@ All outputs land under `logs/<task_name>/`.
 
 ### Output by split type
 
-Whether a split has ground truth (`reference_path` in its JSON) drives what the evaluator can compute on-the-fly. The submission JSON is always written so the predicted trajectory can be scored offline against held-out GT.
+Whether a split has ground truth (`reference_path` in its JSON) drives what the evaluator can compute on-the-fly. The submission JSON is always written so the predicted trajectory can be scored offline against held-out GT. Each save writes a timestamped `submission_<granularity>_<split>_<ts>.json.gz` **and** a stable-named `submission_<granularity>_<split>.json.gz.zip` (a no-recompression zip of the latest json.gz; unzipping recovers it byte-for-byte). **Upload the `.zip` to the [evaluation server](https://www.codabench.org/competitions/17009/).**
 
-| Split                       | GT in JSON | `<dataset_type>_result.json` fields                 | `submission_<dataset_type>_<split>_<ts>.json.gz`   |
+| Split                       | GT in JSON | `<dataset_type>_result.json` fields                 | `submission_<granularity>_<split>_<ts>.json.gz` (+ `.zip`) |
 |-----------------------------|------------|-----------------------------------------------------|----------------------------------------------------|
 | `val_seen` / `val_unseen`   | ✅ yes     | `Count`, `TL`, `FR`, `StR`, **`NE`, `OS`, `SR`, `SPL`** | predicted trajectory per episode                   |
 | `test`                      | ❌ no      | `Count`, `TL`, `FR`, `StR` + `note` pointing to submission | predicted trajectory per episode (score offline)   |
@@ -287,13 +296,6 @@ logs/                 # evaluation outputs (not tracked)
 tests/                # unit / integration tests
 ```
 
-## Challenge submission
-
-> 🚧 **The EvalAI submission portal and format will be announced on the [workshop page](https://emr-workshop.github.io/).**
->
-> Key dates (see workshop site for the canonical schedule):
-> - Paper submission: **July 12, 2026**
-> - Challenge deadline: **July 31, 2026**
 
 ## Citation
 
