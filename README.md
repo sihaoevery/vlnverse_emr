@@ -33,7 +33,11 @@ The challenge is hosted on **[Codabench](https://www.codabench.org/competitions/
 
 > Key dates (see workshop site for the canonical schedule):
 > - Paper submission: **July 12, 2026**
-> - Challenge deadline: **July 31, 2026**
+> - Challenge deadline: **Aug 15, 2026**
+
+## Zero-shot baseline
+
+> **✨ Update (8/July/2026):** We now provide a zero-shot VLNverse baseline interface for running large vision-language models without task-specific training. The interface supports both open-source models such as Qwen and API-based models such as GPT. See [vlnverse_emr_zero_shot](https://github.com/billzhao1030/vlnverse_emr_zero_shot) for setup and usage details.
 
 ## Quickstart
 
